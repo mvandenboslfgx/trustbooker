@@ -87,6 +87,7 @@ function Dashboard() {
           <div className="dashboard-actions">
             <Link to="/request" className="button button-dark">Post a job</Link>
             <Link to="/professionals" className="button">Professional workspace</Link>
+            <Link to="/account" className="button">Account</Link>
             {staff && <Link to="/admin" className="button">Trust operations</Link>}
             <button className="button" disabled={busy} onClick={async () => { setBusy(true); await signOutFn(); await navigate({ to: "/login" }); }} type="button">Sign out</button>
           </div>
