@@ -39,13 +39,14 @@ function BookingWorkspace() {
     );
   }
 
-  const title = workspace.booking.scope_snapshot.request_title ?? "Service booking";
+  const activeWorkspace = workspace;
+  const title = activeWorkspace.booking.scope_snapshot.request_title ?? "Service booking";
 
   async function transition(action: "start_work" | "request_completion" | "confirm_completion" | "cancel") {
     setBusy(action);
     setMessage("");
     try {
-      const result = await transitionBookingFn({ data: { bookingId: workspace.booking.id, action } });
+      const result = await transitionBookingFn({ data: { bookingId: activeWorkspace.booking.id, action } });
       setMessage(result.ok ? `Booking updated to ${result.status}.` : result.message);
       if (result.ok) await router.invalidate();
     } catch {
@@ -57,13 +58,13 @@ function BookingWorkspace() {
 
   async function sendMessage(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!workspace.conversation_id) return;
+    if (!activeWorkspace.conversation_id) return;
     setBusy("message");
     setMessage("");
     const form = new FormData(event.currentTarget);
     try {
       const result = await sendMessageFn({ data: {
-        conversationId: workspace.conversation_id,
+        conversationId: activeWorkspace.conversation_id,
         body: String(form.get("body") ?? ""),
       } });
       setMessage(result.ok ? "Message sent." : result.message);
@@ -85,7 +86,7 @@ function BookingWorkspace() {
     const form = new FormData(event.currentTarget);
     try {
       const result = await openBookingDisputeFn({ data: {
-        bookingId: workspace.booking.id,
+        bookingId: activeWorkspace.booking.id,
         reason: String(form.get("reason") ?? ""),
       } });
       setMessage(result.ok ? `Dispute opened: ${result.disputeId}` : result.message);
@@ -104,8 +105,8 @@ function BookingWorkspace() {
     const form = new FormData(event.currentTarget);
     try {
       const result = await submitReviewFn({ data: {
-        bookingId: workspace.booking.id,
-        providerId: workspace.provider.id,
+        bookingId: activeWorkspace.booking.id,
+        providerId: activeWorkspace.provider.id,
         rating: Number(form.get("rating") ?? 0),
         body: String(form.get("body") ?? ""),
       } });
@@ -118,22 +119,22 @@ function BookingWorkspace() {
     }
   }
 
-  const status = workspace.booking.status;
+  const status = activeWorkspace.booking.status;
   const canCancel = ["accepted", "payment_pending", "booked"].includes(status);
-  const canDispute = ["booked", "in_progress", "completion_pending", "completed"].includes(status) && !workspace.dispute;
-  const canReview = workspace.actor_role === "buyer" && status === "completed";
+  const canDispute = ["booked", "in_progress", "completion_pending", "completed"].includes(status) && !activeWorkspace.dispute;
+  const canReview = activeWorkspace.actor_role === "buyer" && status === "completed";
 
   return (
     <main className="page-space">
       <div className="shell">
         <div className="dashboard-head">
           <div>
-            <span className="eyebrow">{workspace.actor_role} workspace</span>
+            <span className="eyebrow">{activeWorkspace.actor_role} workspace</span>
             <h1>{title}</h1>
-            <p className="muted">Booking {workspace.booking.id} · {status}</p>
+            <p className="muted">Booking {activeWorkspace.booking.id} · {status}</p>
           </div>
           <div className="dashboard-actions">
-            <Link to="/providers/$slug" params={{ slug: workspace.provider.slug }} className="button">View professional</Link>
+            <Link to="/providers/$slug" params={{ slug: activeWorkspace.provider.slug }} className="button">View professional</Link>
             <Link to="/dashboard" className="button">Dashboard</Link>
           </div>
         </div>
@@ -141,9 +142,9 @@ function BookingWorkspace() {
         {message && <div className="notice" role="status">{message}</div>}
 
         <div className="stats-grid">
-          <div><span>Agreed amount</span><strong>{money(workspace.booking.subtotal_minor, workspace.booking.currency)}</strong></div>
-          <div><span>Success fee</span><strong>{money(workspace.booking.marketplace_fee_minor, workspace.booking.currency)}</strong></div>
-          <div><span>Trust score</span><strong>{workspace.provider.trust_score}</strong></div>
+          <div><span>Agreed amount</span><strong>{money(activeWorkspace.booking.subtotal_minor, activeWorkspace.booking.currency)}</strong></div>
+          <div><span>Success fee</span><strong>{money(activeWorkspace.booking.marketplace_fee_minor, activeWorkspace.booking.currency)}</strong></div>
+          <div><span>Trust score</span><strong>{activeWorkspace.provider.trust_score}</strong></div>
           <div><span>Status</span><strong>{status.replaceAll("_", " ")}</strong></div>
         </div>
 
@@ -153,9 +154,9 @@ function BookingWorkspace() {
             <p className="section-lede">Status changes are authorized and audited in the database. Payment-enabled markets cannot start work until payment has moved the booking to booked.</p>
           </div>
           <div className="dashboard-actions">
-            {workspace.actor_role === "provider" && status === "booked" && <button className="button button-brand" disabled={busy !== null} onClick={() => void transition("start_work")} type="button">Start work</button>}
-            {workspace.actor_role === "provider" && status === "in_progress" && <button className="button button-brand" disabled={busy !== null} onClick={() => void transition("request_completion")} type="button">Request completion</button>}
-            {workspace.actor_role === "buyer" && status === "completion_pending" && <button className="button button-brand" disabled={busy !== null} onClick={() => void transition("confirm_completion")} type="button">Confirm completed</button>}
+            {activeWorkspace.actor_role === "provider" && status === "booked" && <button className="button button-brand" disabled={busy !== null} onClick={() => void transition("start_work")} type="button">Start work</button>}
+            {activeWorkspace.actor_role === "provider" && status === "in_progress" && <button className="button button-brand" disabled={busy !== null} onClick={() => void transition("request_completion")} type="button">Request completion</button>}
+            {activeWorkspace.actor_role === "buyer" && status === "completion_pending" && <button className="button button-brand" disabled={busy !== null} onClick={() => void transition("confirm_completion")} type="button">Confirm completed</button>}
             {canCancel && <button className="button" disabled={busy !== null} onClick={() => void transition("cancel")} type="button">Cancel booking</button>}
           </div>
         </section>
@@ -164,14 +165,14 @@ function BookingWorkspace() {
           <section className="content-card">
             <h2>Booking chat</h2>
             <div>
-              {workspace.messages.length === 0 ? <p className="muted">No messages yet.</p> : workspace.messages.map((item) => (
+              {activeWorkspace.messages.length === 0 ? <p className="muted">No messages yet.</p> : activeWorkspace.messages.map((item) => (
                 <div className="review-sample" key={item.id}>
                   <div><strong>Participant</strong><span>{new Date(item.created_at).toLocaleString("en-GB")}</span></div>
                   <p>{item.body}</p>
                 </div>
               ))}
             </div>
-            {workspace.conversation_id && (
+            {activeWorkspace.conversation_id && (
               <form className="form-card" onSubmit={sendMessage}>
                 <label>Message<textarea name="body" required minLength={1} maxLength={10000} rows={4} placeholder="Keep important booking communication on the transaction record." /></label>
                 <button className="button button-dark" disabled={busy !== null} type="submit">{busy === "message" ? "Sending…" : "Send message"}</button>
@@ -181,11 +182,11 @@ function BookingWorkspace() {
 
           <section className="content-card">
             <h2>Dispute & safety</h2>
-            {workspace.dispute ? (
+            {activeWorkspace.dispute ? (
               <div className="notice">
-                <strong>Dispute {workspace.dispute.status}</strong>
-                <p>{workspace.dispute.reason}</p>
-                {workspace.dispute.resolution_note && <p>Resolution: {workspace.dispute.resolution_note}</p>}
+                <strong>Dispute {activeWorkspace.dispute.status}</strong>
+                <p>{activeWorkspace.dispute.reason}</p>
+                {activeWorkspace.dispute.resolution_note && <p>Resolution: {activeWorkspace.dispute.resolution_note}</p>}
               </div>
             ) : canDispute ? (
               <form className="form-card" onSubmit={openDispute}>
