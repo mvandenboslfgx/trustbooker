@@ -4,3 +4,4 @@ export * from "./trust-score.js";
 export * from "./booking-state.js";
 export * from "./review-policy.js";
 export * from "./ranking.js";
+export * from "./payments.js";
