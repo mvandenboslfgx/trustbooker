@@ -54,6 +54,16 @@ function Home() {
         <div className="shell tb-hero-bottom"><span>TRUSTBOOKER / THE SERVICE MARKETPLACE</span><span>DISCOVER <span aria-hidden="true">↘</span> CONNECT <span aria-hidden="true">↘</span> GET IT DONE</span></div>
       </section>
 
+
+      <section className="tb-universe-section"><div className="shell">
+        <div className="tb-section-top"><span className="tb-section-kicker">ONE PLATFORM / MORE POSSIBILITIES</span><Link className="tb-text-arrow" to="/explore">Explore everything ↗</Link></div>
+        <div className="section-head tb-editorial-head"><div><h2>More ways to connect.<br/><em>One trusted place.</em></h2></div><p className="section-lede">Services, careers and experiences. Discover the opportunities that move your world forward.</p></div>
+        <div className="tb-universe-grid">
+          <Link className="tb-universe-card" to="/marketplace"><span>01 / SERVICES</span><div className="tb-universe-icon">✳</div><h3>Find a professional.</h3><p>Skilled people for the projects that matter.</p><strong>Explore services ↗</strong></Link>
+          <Link className="tb-universe-card" to="/jobs"><span>02 / CAREERS</span><div className="tb-universe-icon">↗</div><h3>Find your next role.</h3><p>Jobs, careers and freelance opportunities.</p><strong>Explore jobs ↗</strong></Link>
+          <Link className="tb-universe-card" to="/events"><span>03 / EVENTS</span><div className="tb-universe-icon">◎</div><h3>Find your people.</h3><p>Meetups, culture and remarkable experiences.</p><strong>Explore events ↗</strong></Link>
+        </div>
+      </div></section>
       <section className="tb-benefit-strip">
         <div className="shell tb-benefits">
           <div><span className="tb-benefit-mark">01</span><strong>Search with purpose.</strong><small>Explore useful services, not sponsored rankings.</small></div>
