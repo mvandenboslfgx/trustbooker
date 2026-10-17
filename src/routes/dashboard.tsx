@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-r
 import { useState } from "react";
 import { getCurrentUserFn, signOutFn } from "@/server/auth.functions";
 import { getMyRolesFn } from "@/server/admin.functions";
+import { getMyBookingsFn } from "@/server/booking.functions";
 import {
   getBuyerProposalInboxFn,
   getDashboardSummaryFn,
@@ -10,13 +11,14 @@ import { acceptProposalFn } from "@/server/interaction.functions";
 
 export const Route = createFileRoute("/dashboard")({
   loader: async () => {
-    const [user, summary, proposals, roles] = await Promise.all([
+    const [user, summary, proposals, roles, bookings] = await Promise.all([
       getCurrentUserFn(),
       getDashboardSummaryFn(),
       getBuyerProposalInboxFn(),
       getMyRolesFn(),
+      getMyBookingsFn(),
     ]);
-    return { user, summary, proposals, roles };
+    return { user, summary, proposals, roles, bookings };
   },
   component: Dashboard,
 });
@@ -38,7 +40,7 @@ function formatMoney(minor: number, currency: string): string {
 }
 
 function Dashboard() {
-  const { user, summary, proposals, roles } = Route.useLoaderData();
+  const { user, summary, proposals, roles, bookings } = Route.useLoaderData();
   const navigate = useNavigate();
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -90,6 +92,24 @@ function Dashboard() {
           </div>
         </div>
         <div className="stats-grid"><Metric label="Open requests" value={summary?.openRequests ?? null} /><Metric label="Active bookings" value={summary?.activeBookings ?? null} /><Metric label="Completed bookings" value={summary?.completedBookings ?? null} /><Metric label="Offers received" value={proposals.length} /></div>
+
+        <section className="content-card">
+          <div className="section-head"><div><span className="eyebrow">Transactions</span><h2>Your bookings</h2></div><p className="section-lede">Open the participant workspace for booking status, chat, completion confirmation and dispute controls.</p></div>
+          {bookings.length === 0 ? <p className="muted">No bookings yet.</p> : (
+            <div className="provider-grid">
+              {bookings.map((booking) => (
+                <article className="provider-card" key={booking.id}>
+                  <div className="provider-body">
+                    <span className="eyebrow">{booking.status.replaceAll("_", " ")}</span>
+                    <h3>{formatMoney(booking.subtotal_minor, booking.currency)}</h3>
+                    <p className="muted">Booking {booking.id}</p>
+                    <div className="provider-footer"><div><small>Success fee</small><strong>{formatMoney(booking.marketplace_fee_minor, booking.currency)}</strong></div><Link to="/bookings/$id" params={{ id: booking.id }} className="arrow-link">Open workspace →</Link></div>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
 
         <section className="content-card">
           <div className="section-head">
