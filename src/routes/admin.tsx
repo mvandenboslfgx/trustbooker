@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import {
   getMyRolesFn,
   getPendingReviewsFn,
@@ -7,21 +7,31 @@ import {
   moderateProviderFn,
   moderateReviewFn,
 } from "@/server/admin.functions";
+import { getOpenDisputesFn, resolveDisputeFn } from "@/server/dispute-admin.functions";
 
 export const Route = createFileRoute("/admin")({
   loader: async () => {
-    const [roles, queue, reviews] = await Promise.all([
+    const [roles, queue, reviews, disputes] = await Promise.all([
       getMyRolesFn(),
       getProviderReviewQueueFn(),
       getPendingReviewsFn(),
+      getOpenDisputesFn(),
     ]);
-    return { roles, queue, reviews };
+    return { roles, queue, reviews, disputes };
   },
   component: AdminPage,
 });
 
+function money(minor: number, currency: string) {
+  try {
+    return new Intl.NumberFormat("en-GB", { style: "currency", currency }).format(minor / 100);
+  } catch {
+    return `${currency} ${(minor / 100).toFixed(2)}`;
+  }
+}
+
 function AdminPage() {
-  const { roles, queue, reviews } = Route.useLoaderData();
+  const { roles, queue, reviews, disputes } = Route.useLoaderData();
   const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
   const [message, setMessage] = useState("");
@@ -55,13 +65,35 @@ function AdminPage() {
     }
   }
 
-  if (!staff || !queue.authorized || !reviews.authorized) {
+  async function resolveDispute(event: FormEvent<HTMLFormElement>, disputeId: string) {
+    event.preventDefault();
+    setBusy(`dispute:${disputeId}`);
+    setMessage("");
+    const form = new FormData(event.currentTarget);
+    const selectedOutcome = String(form.get("outcome") ?? "");
+    const outcome = selectedOutcome === "cancel" ? "cancel" : "complete";
+    try {
+      const result = await resolveDisputeFn({ data: {
+        disputeId,
+        outcome,
+        resolutionNote: String(form.get("resolutionNote") ?? ""),
+      } });
+      setMessage(result.ok ? `Dispute resolved; booking is now ${result.status}.` : result.message);
+      if (result.ok) await router.invalidate();
+    } catch {
+      setMessage("The dispute resolution could not be completed.");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  if (!staff || !queue.authorized || !reviews.authorized || !disputes.authorized) {
     return (
       <main className="page-space">
         <div className="shell narrow empty-state">
           <span className="eyebrow">Restricted</span>
           <h1>Staff access required.</h1>
-          <p>Provider and review moderation are protected by database roles, not just hidden UI.</p>
+          <p>Provider, review and dispute moderation are protected by database roles, not just hidden UI.</p>
           <Link to="/dashboard" className="button">Back to dashboard</Link>
         </div>
       </main>
@@ -75,7 +107,7 @@ function AdminPage() {
           <div>
             <span className="eyebrow">Trust operations</span>
             <h1>Verification & moderation</h1>
-            <p className="muted">Only approve evidence you have actually checked. Provider and review decisions are written to the audit trail.</p>
+            <p className="muted">Only approve evidence you have actually checked. Provider, review and dispute decisions are written to the audit trail.</p>
           </div>
           <Link to="/dashboard" className="button">Dashboard</Link>
         </div>
@@ -130,6 +162,31 @@ function AdminPage() {
                       <button className="button" disabled={busy !== null} onClick={() => void moderateReview(review.id, "hide")} type="button">Hide</button>
                       <button className="button" disabled={busy !== null} onClick={() => void moderateReview(review.id, "remove")} type="button">Remove</button>
                     </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
+
+        <section className="content-card">
+          <div className="section-head"><div><span className="eyebrow">Safety</span><h2>Open disputes</h2></div><p className="section-lede">This queue resolves marketplace state only. Refunds or payouts must be handled by the payment ledger once payments are enabled.</p></div>
+          {disputes.disputes.length === 0 ? (
+            <p className="muted">There are no open disputes.</p>
+          ) : (
+            <div className="provider-grid">
+              {disputes.disputes.map((dispute) => (
+                <article className="provider-card" key={dispute.id}>
+                  <div className="provider-body">
+                    <span className="eyebrow">{dispute.provider_name} · {dispute.booking_status}</span>
+                    <h3>{money(dispute.subtotal_minor, dispute.currency)}</h3>
+                    <p>{dispute.reason}</p>
+                    <div className="provider-meta"><span>Booking {dispute.booking_id}</span><span>Opened {new Date(dispute.created_at).toLocaleDateString("en-GB")}</span></div>
+                    <form className="form-card" onSubmit={(event) => void resolveDispute(event, dispute.id)}>
+                      <label>Outcome<select name="outcome" defaultValue="complete"><option value="complete">Resolve as completed</option><option value="cancel">Resolve as cancelled</option></select></label>
+                      <label>Resolution note<textarea name="resolutionNote" required minLength={10} maxLength={5000} rows={4} placeholder="Explain the evidence reviewed and the marketplace decision." /></label>
+                      <button className="button button-brand" disabled={busy !== null} type="submit">{busy === `dispute:${dispute.id}` ? "Resolving…" : "Resolve dispute"}</button>
+                    </form>
                   </div>
                 </article>
               ))}
