@@ -1,11 +1,11 @@
-import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { useState } from "react";
 import {
   cancelAccountDeletionFn,
   getAccountDeletionRequestFn,
   requestAccountDeletionFn,
 } from "@/server/account.functions";
-import { getCurrentUserFn } from "@/server/auth.functions";
+import { getCurrentUserFn, signOutAllSessionsFn } from "@/server/auth.functions";
 
 export const Route = createFileRoute("/account")({
   loader: async () => {
@@ -21,6 +21,7 @@ export const Route = createFileRoute("/account")({
 function AccountControls() {
   const { user, deletionRequest } = Route.useLoaderData();
   const router = useRouter();
+  const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
 
@@ -65,6 +66,24 @@ function AccountControls() {
     }
   }
 
+  async function revokeAllSessions() {
+    if (!window.confirm("Sign out every TrustBooker session on all devices?")) return;
+    setBusy(true);
+    setMessage("");
+    try {
+      const result = await signOutAllSessionsFn();
+      if (!result.ok) {
+        setMessage(result.message);
+        return;
+      }
+      await navigate({ to: "/login" });
+    } catch {
+      setMessage("All sessions could not be revoked. Please try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <main className="page-space">
       <div className="shell narrow">
@@ -84,6 +103,15 @@ function AccountControls() {
           <h2>Lost access to your password?</h2>
           <p className="muted">Use the recovery flow from the sign-in page. Recovery links are handled by Supabase Auth and expire according to the authentication configuration.</p>
           <Link className="button" to="/login">Open sign-in & recovery</Link>
+        </section>
+
+        <section className="content-card">
+          <span className="eyebrow">Session security</span>
+          <h2>Revoke every active session</h2>
+          <p className="muted">Use this after a lost device or suspicious login. It revokes refresh tokens across your TrustBooker sessions and signs this session out too.</p>
+          <button className="button" disabled={busy} onClick={() => void revokeAllSessions()} type="button">
+            {busy ? "Working…" : "Sign out all devices"}
+          </button>
         </section>
 
         <section className="content-card">
