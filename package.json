@@ -1,0 +1,59 @@
+{
+  "name": "trustbooker",
+  "version": "0.3.0",
+  "private": true,
+  "description": "TrustBooker — global horizontal services marketplace",
+  "type": "module",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "vite dev",
+    "build": "vite build",
+    "build:domain": "tsc -p tsconfig.domain.json",
+    "preview": "vite preview",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.domain.json --noEmit",
+    "lint": "eslint .",
+    "format-check": "prettier --check .",
+    "format": "prettier --write .",
+    "test": "vitest run --config vitest.config.ts",
+    "test:watch": "vitest --config vitest.config.ts",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
+    "test:e2e": "playwright test",
+    "audit:deps": "npm audit --audit-level=high",
+    "supabase:start": "npx supabase start",
+    "supabase:stop": "npx supabase stop",
+    "supabase:status": "npx supabase status",
+    "supabase:reset": "npx supabase db reset",
+    "validate": "npm run typecheck && npm run lint && npm run test && npm run build"
+  },
+  "dependencies": {
+    "@supabase/ssr": "0.12.3",
+    "@supabase/supabase-js": "2.110.7",
+    "@tanstack/react-router": "1.170.18",
+    "@tanstack/react-start": "1.168.30",
+    "i18next": "^25.3.2",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-i18next": "^15.6.1",
+    "zod": "^4.0.5"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.31.0",
+    "@playwright/test": "^1.54.1",
+    "@tailwindcss/vite": "^4.1.11",
+    "@types/node": "^22.16.5",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "@vitejs/plugin-react": "^4.7.0",
+    "eslint": "^9.31.0",
+    "prettier": "^3.6.2",
+    "supabase": "2.109.1",
+    "tailwindcss": "^4.1.11",
+    "tsx": "^4.20.3",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.38.0",
+    "vite": "^7.0.5",
+    "vitest": "^3.2.4"
+  }
+}
