@@ -1,0 +1,40 @@
+name: Verify Cloudflare runtime fix
+on:
+  push:
+    branches: [fix/cloudflare-runtime-security]
+permissions:
+  contents: write
+jobs:
+  verify-and-lock:
+    if: ${{ !contains(github.event.head_commit.message, '[lock-generated]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22.20.0
+          cache: npm
+      - name: Resolve security-updated Wrangler dependency
+        run: npm install --package-lock-only --no-audit --no-fund
+      - name: Reproducible install
+        run: npm ci --no-audit --no-fund
+      - name: Build, types, lint, unit tests
+        run: npm run validate
+      - name: Security dependency audit
+        run: npm audit --audit-level=high
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Cloudflare-backed browser E2E
+        run: npm run test:e2e
+      - name: Verify bundle without deployment
+        run: npx wrangler deploy --dry-run
+      - name: Commit lockfile
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package-lock.json
+          if ! git diff --cached --quiet; then
+            git commit -m "build: lock vetted Cloudflare dependencies [lock-generated]"
+            git push origin HEAD:fix/cloudflare-runtime-security
+          fi
