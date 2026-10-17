@@ -186,7 +186,7 @@ export const getDashboardSummaryFn = createServerFn({ method: "GET" }).handler(a
     supabase
       .from("bookings")
       .select("id", { count: "exact", head: true })
-      .in("status", ["accepted", "payment_pending", "booked", "in_progress", "disputed"]),
+      .in("status", ["accepted", "payment_pending", "booked", "in_progress", "completion_pending", "disputed"]),
     supabase
       .from("bookings")
       .select("id", { count: "exact", head: true })
