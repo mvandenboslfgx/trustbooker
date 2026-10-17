@@ -268,4 +268,148 @@ describe("local Supabase marketplace flow", () => {
 
     expect(error).not.toBeNull();
   });
+
+  it("prevents non-participants from reading a booking workspace or changing its state", async () => {
+    const outsider = await createAuthenticatedClient("buyer", "-outsider");
+
+    const outsiderView = await outsider.client.rpc("get_booking_workspace", {
+      p_booking_id: bookingId,
+    });
+    expect(outsiderView.error).not.toBeNull();
+    expect(outsiderView.data).toBeNull();
+
+    const outsiderTransition = await outsider.client.rpc("transition_booking", {
+      p_booking_id: bookingId,
+      p_action: "start_work",
+    });
+    expect(outsiderTransition.error).not.toBeNull();
+
+    const outsiderBookings = await outsider.client
+      .from("bookings")
+      .select("id")
+      .eq("id", bookingId);
+    expect(outsiderBookings.error).toBeNull();
+    expect(outsiderBookings.data).toEqual([]);
+  });
+
+  it("creates a participant-only conversation and rejects outsider messages", async () => {
+    const buyerView = await buyer.rpc("get_booking_workspace", { p_booking_id: bookingId });
+    const providerView = await provider.rpc("get_booking_workspace", { p_booking_id: bookingId });
+
+    expect(buyerView.error).toBeNull();
+    expect(providerView.error).toBeNull();
+    expect(buyerView.data?.actor_role).toBe("buyer");
+    expect(providerView.data?.actor_role).toBe("provider");
+    expect(buyerView.data?.conversation_id).toBeTruthy();
+    expect(providerView.data?.conversation_id).toBe(buyerView.data?.conversation_id);
+
+    const conversationId = buyerView.data.conversation_id as string;
+    const outsider = await createAuthenticatedClient("buyer", "-chat-outsider");
+    const outsiderRead = await outsider.client
+      .from("messages").select("id").eq("conversation_id", conversationId);
+    expect(outsiderRead.error).toBeNull();
+    expect(outsiderRead.data).toEqual([]);
+
+    const outsiderWrite = await outsider.client.from("messages").insert({
+      conversation_id: conversationId,
+      body: "Unauthorized message must never be accepted.",
+    });
+    expect(outsiderWrite.error).not.toBeNull();
+
+    const sent = await buyer.from("messages").insert({
+      conversation_id: conversationId,
+      body: "Buyer has confirmed the agreed scope.",
+    });
+    expect(sent.error).toBeNull();
+
+    const refreshed = await provider.rpc("get_booking_workspace", { p_booking_id: bookingId });
+    expect(refreshed.error).toBeNull();
+    expect(refreshed.data?.messages?.some((m: { body: string }) => m.body === "Buyer has confirmed the agreed scope.")).toBe(true);
+  });
+
+  it("requires provider start and buyer-confirmed completion, then allows exactly one review", async () => {
+    const unauthorizedStart = await buyer.rpc("transition_booking", {
+      p_booking_id: bookingId, p_action: "start_work",
+    });
+    expect(unauthorizedStart.error).not.toBeNull();
+
+    const earlyReview = await buyer.from("reviews").insert({
+      booking_id: bookingId,
+      provider_id: providerProfileId,
+      rating: 5,
+      body: "This must be rejected before buyer-confirmed completion.",
+    });
+    expect(earlyReview.error).not.toBeNull();
+
+    const started = await provider.rpc("transition_booking", {
+      p_booking_id: bookingId, p_action: "start_work",
+    });
+    expect(started.error).toBeNull();
+    expect(started.data).toBe("in_progress");
+
+    const providerSelfConfirm = await provider.rpc("transition_booking", {
+      p_booking_id: bookingId, p_action: "confirm_completion",
+    });
+    expect(providerSelfConfirm.error).not.toBeNull();
+
+    const requested = await provider.rpc("transition_booking", {
+      p_booking_id: bookingId, p_action: "request_completion",
+    });
+    expect(requested.error).toBeNull();
+    expect(requested.data).toBe("completion_pending");
+
+    const buyerCannotRequest = await buyer.rpc("transition_booking", {
+      p_booking_id: bookingId, p_action: "request_completion",
+    });
+    expect(buyerCannotRequest.error).not.toBeNull();
+
+    const confirmed = await buyer.rpc("transition_booking", {
+      p_booking_id: bookingId, p_action: "confirm_completion",
+    });
+    expect(confirmed.error).toBeNull();
+    expect(confirmed.data).toBe("completed");
+
+    const repeatedConfirm = await buyer.rpc("transition_booking", {
+      p_booking_id: bookingId, p_action: "confirm_completion",
+    });
+    expect(repeatedConfirm.error).not.toBeNull();
+
+    const { data: providerTotals, error: totalsError } = await service
+      .from("provider_profiles")
+      .select("completed_jobs")
+      .eq("id", providerProfileId)
+      .single();
+    expect(totalsError).toBeNull();
+    expect(providerTotals?.completed_jobs).toBe(1);
+
+    const submitted = await buyer.from("reviews").insert({
+      booking_id: bookingId,
+      provider_id: providerProfileId,
+      rating: 5,
+      body: "Work was completed and confirmed by the buyer.",
+    }).select("id").single();
+    expect(submitted.error).toBeNull();
+    expect(submitted.data?.id).toBeTruthy();
+
+    const publicReviews = await publicClient.from("reviews").select("id").eq("booking_id", bookingId);
+    expect(publicReviews.error).toBeNull();
+    expect(publicReviews.data).toEqual([]);
+
+    const duplicate = await buyer.from("reviews").insert({
+      booking_id: bookingId,
+      provider_id: providerProfileId,
+      rating: 4,
+      body: "Duplicate submissions must be rejected for the same booking.",
+    });
+    expect(duplicate.error).not.toBeNull();
+
+    const providerForgery = await provider.from("reviews").insert({
+      booking_id: bookingId,
+      provider_id: providerProfileId,
+      rating: 5,
+      body: "Providers must not be allowed to review their own bookings.",
+    });
+    expect(providerForgery.error).not.toBeNull();
+  });
+
 });
