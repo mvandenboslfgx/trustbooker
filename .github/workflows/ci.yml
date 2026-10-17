@@ -33,6 +33,13 @@ jobs:
         run: npx supabase start
       - name: Rebuild database from migrations
         run: npx supabase db reset
+      - name: Run marketplace integration tests
+        shell: bash
+        run: |
+          set -a
+          eval "$(npx supabase status -o env)"
+          set +a
+          npm run test:integration
       - name: Lint rebuilt database
         run: npx supabase db lint --local --level warning
       - name: Show migration status
