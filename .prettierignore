@@ -1,0 +1,8 @@
+dist
+dist-domain
+.output
+node_modules
+coverage
+package-lock.json
+src/routeTree.gen.ts
+*.md
