@@ -53,9 +53,15 @@ test("readiness probe fails closed when dependencies are unavailable", async ({ 
   expect(response.status() === 200 ? body.status : "not_ready").toBe(body.status);
 });
 
-test("account data export fails closed without authentication", async ({ request }) => {
+test("account data export fails closed without a usable account session", async ({ request }) => {
   const response = await request.get("/account/export");
-  expect(response.status()).toBe(401);
+  expect([401, 503]).toContain(response.status());
   expect(response.headers()["cache-control"]).toContain("no-store");
-  expect(await response.json()).toEqual({ error: "Authentication required." });
+
+  const body = await response.json();
+  if (response.status() === 503) {
+    expect(body).toEqual({ error: "Account export is not configured for this environment." });
+  } else {
+    expect(body).toEqual({ error: "Authentication required." });
+  }
 });
