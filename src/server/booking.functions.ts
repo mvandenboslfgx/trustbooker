@@ -31,6 +31,13 @@ const bookingListSchema = z.array(z.object({
   updated_at: z.string(),
 }));
 
+const bookingScopeSchema = z.object({
+  request_title: z.string().optional(),
+  request_description: z.string().optional(),
+  proposal_message: z.string().optional(),
+  accepted_at: z.string().optional(),
+});
+
 const workspaceSchema = z.object({
   actor_role: z.enum(["buyer", "provider"]),
   booking: z.object({
@@ -39,7 +46,7 @@ const workspaceSchema = z.object({
     subtotal_minor: z.coerce.number(),
     marketplace_fee_minor: z.coerce.number(),
     currency: z.string(),
-    scope_snapshot: z.record(z.string(), z.unknown()),
+    scope_snapshot: bookingScopeSchema,
     created_at: z.string(),
     updated_at: z.string(),
   }),
