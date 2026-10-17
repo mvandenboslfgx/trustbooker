@@ -34,6 +34,32 @@ function toMinor(value: string): number | undefined {
   return Math.round(parsed * 100);
 }
 
+function currencyForCountry(country: string): string {
+  const region = country.toUpperCase();
+  if (["GB"].includes(region)) return "GBP";
+  if (["US", "AS", "GU", "PR", "VI"].includes(region)) return "USD";
+  if (["CA"].includes(region)) return "CAD";
+  if (["AU"].includes(region)) return "AUD";
+  if (["NZ"].includes(region)) return "NZD";
+  if (["CH", "LI"].includes(region)) return "CHF";
+  if (["SE"].includes(region)) return "SEK";
+  if (["NO", "SJ"].includes(region)) return "NOK";
+  if (["DK", "FO", "GL"].includes(region)) return "DKK";
+  if (["PL"].includes(region)) return "PLN";
+  if (["CZ"].includes(region)) return "CZK";
+  if (["HU"].includes(region)) return "HUF";
+  if (["RO"].includes(region)) return "RON";
+  if (["BG"].includes(region)) return "BGN";
+  if (["TR"].includes(region)) return "TRY";
+  if (["AL"].includes(region)) return "ALL";
+  if (["IN"].includes(region)) return "INR";
+  if (["JP"].includes(region)) return "JPY";
+  if (["AE"].includes(region)) return "AED";
+  if (["ZA"].includes(region)) return "ZAR";
+  if (["BR"].includes(region)) return "BRL";
+  return "EUR";
+}
+
 function money(minor: number | null, currency: string) {
   if (minor == null) return "Quote required";
   try {
@@ -157,7 +183,7 @@ function Professionals() {
 
   if (!profile) {
     return (
-      <main className="page-space">
+      <main className="page-space tb-professional-page">
         <div className="shell narrow">
           <span className="eyebrow">For professionals</span>
           <h1 className="page-title">Build trust. Win the right work.</h1>
@@ -167,7 +193,7 @@ function Professionals() {
             <label>Profile URL slug<input name="slug" pattern="[a-z0-9]+(?:-[a-z0-9]+)*" placeholder="your-business-name" /></label>
             <label>Headline<input name="headline" required minLength={5} maxLength={180} placeholder="What are you excellent at?" /></label>
             <label>About your work<textarea name="description" rows={6} maxLength={10000} placeholder="Experience, approach, specialties and what clients can expect." /></label>
-            <div className="two-col"><label>Country code<input name="countryCode" defaultValue="GB" required minLength={2} maxLength={2} /></label><label>City / service base<input name="locality" required minLength={2} maxLength={160} /></label></div>
+            <div className="two-col"><label>Country code (ISO 3166)<input name="countryCode" defaultValue="GB" required minLength={2} maxLength={2} /></label><label>City / service base<input name="locality" required minLength={2} maxLength={160} /></label></div>
             {message && <div className="notice" role="status">{message}</div>}
             <button className="button button-brand" disabled={busy === "onboard"} type="submit">{busy === "onboard" ? "Creating securely…" : "Create professional profile"}</button>
           </form>
@@ -180,13 +206,13 @@ function Professionals() {
   const verified = profile.identity_status === "verified" && profile.business_status === "verified";
 
   return (
-    <main className="page-space">
+    <main className="page-space tb-professional-page">
       <div className="shell">
         <div className="dashboard-head">
           <div>
             <span className="eyebrow">Professional workspace</span>
             <h1>{profile.display_name}</h1>
-            <p className="muted">{profile.locality} · {profile.country_code} · status: {profile.status}</p>
+            <p className="muted">{profile.locality} · {profile.country_code} · <span className="tb-professional-state">{profile.status === "active" ? "Active profile" : "Private draft"}</span></p>
           </div>
           <div className="dashboard-actions">
             {profile.status === "active" && <Link to="/providers/$slug" params={{ slug: profile.slug }} className="button">View public profile</Link>}
@@ -217,7 +243,7 @@ function Professionals() {
               <label>Category<select name="category" required defaultValue=""><option value="" disabled>Select category</option>{serviceCategories.map((category) => <option key={category.slug} value={category.slug}>{category.name}</option>)}</select></label>
               <label>Service title<input name="title" required minLength={3} maxLength={160} placeholder="e.g. Emergency plumbing repair" /></label>
               <label>Description<textarea name="description" rows={5} required minLength={10} maxLength={10000} /></label>
-              <div className="two-col"><label>Starting price<input name="startingPrice" type="number" min="0" step="0.01" inputMode="decimal" placeholder="Optional" /></label><label>Currency<input name="currency" defaultValue="GBP" required minLength={3} maxLength={3} /></label></div>
+              <div className="two-col"><label>Starting price<input name="startingPrice" type="number" min="0" step="0.01" inputMode="decimal" placeholder="Optional" /></label><label>Currency<input name="currency" defaultValue={currencyForCountry(profile.country_code)} required minLength={3} maxLength={3} /></label></div>
               <button className="button button-dark" disabled={busy === "service" || profile.status === "suspended"} type="submit">{busy === "service" ? "Adding…" : "Add service"}</button>
             </form>
           </section>

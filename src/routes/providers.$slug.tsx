@@ -1,5 +1,4 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { demoProviders } from "@/data/demo";
 import { getPublicProviderProfileFn } from "@/server/provider.functions";
 
 export const Route = createFileRoute("/providers/$slug")({
@@ -21,31 +20,10 @@ function money(minor: number | null, currency: string) {
 }
 
 function ProviderProfile() {
-  const { slug } = Route.useParams();
   const result = Route.useLoaderData();
 
-  if (!result.configured) {
-    const provider = demoProviders.find((item) => item.slug === slug);
-    if (!provider) {
-      return <main className="shell page-space"><div className="empty-state"><h1>Professional not found.</h1><Link to="/marketplace">Back to marketplace</Link></div></main>;
-    }
-
-    return (
-      <main className="page-space">
-        <div className="shell profile-layout">
-          <section>
-            <div className="notice" role="status">Preview profile — connect Supabase for live services and verified reviews.</div>
-            <div className="profile-hero"><div className="avatar-xl">{provider.displayName.split(" ").slice(0, 2).map((x) => x[0]).join("")}</div><div><span className="eyebrow">{provider.city} · {provider.countryCode}</span><h1>{provider.displayName}</h1><p>{provider.headline}</p><div className="provider-meta"><span className="stars">★ {provider.rating.toFixed(1)}</span><span>{provider.reviewCount} reviews</span><span>{provider.completedJobs} completed jobs</span></div></div></div>
-            <div className="content-card"><h2>Trust signals</h2><div className="trust-detail-grid"><div><strong>{provider.trustScore}/100</strong><span>Trust score</span></div><div><strong>{provider.responseMinutes} min</strong><span>Typical response</span></div><div><strong>{provider.verifiedIdentity ? "Verified" : "Pending"}</strong><span>Identity</span></div><div><strong>{provider.verifiedBusiness ? "Verified" : "Individual"}</strong><span>Business</span></div></div></div>
-          </section>
-          <aside className="booking-card"><span className="eyebrow">Preview service</span><h2>{provider.featuredService}</h2><div className="price-row"><span>Starting from</span><strong>{money(provider.startingPriceMinor, provider.currency)}</strong></div><Link to="/request" className="button button-brand full">Request a quote</Link></aside>
-        </div>
-      </main>
-    );
-  }
-
   if (!result.profile) {
-    return <main className="shell page-space"><div className="empty-state"><h1>Professional not found.</h1><p>This profile is unavailable, not active, or outside an open discovery market.</p><Link to="/marketplace">Back to marketplace</Link></div></main>;
+    return <main className="shell page-space"><div className="empty-state"><h1>{result.configured ? "Professional not available." : "Directory temporarily unavailable."}</h1><p>{result.configured ? "This profile is not publicly active or the country is not open for discovery." : "Please try again later. We do not show fictional profiles when the directory is unavailable."}</p><Link to="/marketplace" className="button">Back to marketplace</Link></div></main>;
   }
 
   const { provider, services, reviews } = result.profile;

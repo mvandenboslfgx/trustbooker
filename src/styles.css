@@ -695,3 +695,25 @@ body { -webkit-font-smoothing: antialiased; }
   .tb-trust-grid article h2 { margin-top: 23px; }
   .tb-trust-disclosure { padding: 25px; }
 }
+
+/* Refined professional management — fewer nested cards and clearer states */
+.tb-professional-page { background: #f6f8f3; }
+.tb-professional-page .dashboard-head { margin-bottom: 36px; padding-bottom: 23px; border-bottom: 1px solid #e2e9e0; }
+.tb-professional-page .dashboard-head h1 { margin: 12px 0; font-size: clamp(43px,4.5vw,64px); letter-spacing: -.06em; }
+.tb-professional-page .dashboard-head .muted { font-size: 14px; }
+.tb-professional-state { display: inline-flex; padding: 6px 11px; border: 1px solid #d3e0d0; border-radius: 99px; background: #eef5e7; color: #386648; font-size: 11px; font-weight: 780; }
+.tb-professional-page .two-col > .content-card { margin: 0; padding: 34px; border-radius: 23px; }
+.tb-professional-page .two-col > .content-card h2 { margin: 0 0 25px; font-size: 27px; letter-spacing: -.045em; }
+.tb-professional-page .content-card > .form-card { padding: 0; margin-top: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+.tb-professional-page .content-card > .form-card .two-col { gap: 12px; }
+.tb-professional-page .content-card > .form-card textarea { min-height: 140px; }
+.tb-professional-page .content-card > .form-card .button { width: 100%; }
+.tb-professional-page > .shell > .content-card { margin-top: 24px; }
+.tb-professional-page .provider-grid .provider-card .provider-body > p { min-height: 0; }
+.tb-professional-page .provider-grid .provider-card .provider-footer small { color: #75917e; font-weight: 690; }
+.tb-professional-page .provider-grid .provider-card .provider-footer button { min-height: 42px; }
+.tb-professional-page .notice { margin: 0 0 15px; }
+@media (max-width: 700px) {
+ .tb-professional-page .two-col > .content-card { padding: 23px 19px; }
+ .tb-professional-page .dashboard-head h1 { font-size: 43px; }
+}

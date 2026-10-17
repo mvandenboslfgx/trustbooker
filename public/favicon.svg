@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="TrustBooker">
+  <rect width="64" height="64" rx="18" fill="#172e26"/>
+  <path fill="#e4f3aa" d="M18 16h32l-3 9H36l-5.5 24H20l5.5-24H15z"/>
+  <circle cx="46" cy="47" r="4" fill="#9fcd80"/>
+</svg>
