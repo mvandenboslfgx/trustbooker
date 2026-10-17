@@ -5,7 +5,7 @@ import {
   openBookingDisputeFn,
   transitionBookingFn,
 } from "@/server/booking.functions";
-import { sendMessageFn } from "@/server/interaction.functions";
+import { sendMessageFn, submitReviewFn } from "@/server/interaction.functions";
 
 export const Route = createFileRoute("/bookings/$id")({
   loader: ({ params }) => getBookingWorkspaceFn({ data: { bookingId: params.id } }),
@@ -39,9 +39,7 @@ function BookingWorkspace() {
     );
   }
 
-  const title = typeof workspace.booking.scope_snapshot.request_title === "string"
-    ? workspace.booking.scope_snapshot.request_title
-    : "Service booking";
+  const title = workspace.booking.scope_snapshot.request_title ?? "Service booking";
 
   async function transition(action: "start_work" | "request_completion" | "confirm_completion" | "cancel") {
     setBusy(action);
@@ -99,9 +97,31 @@ function BookingWorkspace() {
     }
   }
 
+  async function submitReview(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setBusy("review");
+    setMessage("");
+    const form = new FormData(event.currentTarget);
+    try {
+      const result = await submitReviewFn({ data: {
+        bookingId: workspace.booking.id,
+        providerId: workspace.provider.id,
+        rating: Number(form.get("rating") ?? 0),
+        body: String(form.get("body") ?? ""),
+      } });
+      setMessage(result.ok ? "Review submitted for transaction verification." : result.message);
+      if (result.ok) event.currentTarget.reset();
+    } catch {
+      setMessage("The review could not be submitted.");
+    } finally {
+      setBusy(null);
+    }
+  }
+
   const status = workspace.booking.status;
   const canCancel = ["accepted", "payment_pending", "booked"].includes(status);
   const canDispute = ["booked", "in_progress", "completion_pending", "completed"].includes(status) && !workspace.dispute;
+  const canReview = workspace.actor_role === "buyer" && status === "completed";
 
   return (
     <main className="page-space">
@@ -178,6 +198,17 @@ function BookingWorkspace() {
             )}
           </section>
         </div>
+
+        {canReview && (
+          <section className="content-card">
+            <div className="section-head"><div><span className="eyebrow">Verified reputation</span><h2>Review completed work</h2></div><p className="section-lede">Your review is linked to this completed booking. It becomes public only after the transaction link is validated by Trust Operations.</p></div>
+            <form className="form-card" onSubmit={submitReview}>
+              <label>Rating<select name="rating" defaultValue="5" required><option value="5">5 — Excellent</option><option value="4">4 — Good</option><option value="3">3 — Average</option><option value="2">2 — Poor</option><option value="1">1 — Very poor</option></select></label>
+              <label>Your experience<textarea name="body" required minLength={10} maxLength={5000} rows={5} placeholder="Describe what happened, what was agreed and how the work was delivered." /></label>
+              <button className="button button-brand" disabled={busy !== null} type="submit">{busy === "review" ? "Submitting…" : "Submit verified-booking review"}</button>
+            </form>
+          </section>
+        )}
       </div>
     </main>
   );
