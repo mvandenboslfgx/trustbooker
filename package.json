@@ -5,7 +5,7 @@
   "description": "TrustBooker — global horizontal services marketplace",
   "type": "module",
   "engines": {
-    "node": ">=22.12.0"
+    "node": ">=22.20.0"
   },
   "scripts": {
     "dev": "vite dev",
@@ -25,7 +25,7 @@
     "supabase:stop": "npx supabase stop",
     "supabase:status": "npx supabase status",
     "supabase:reset": "npx supabase db reset",
-    "validate": "npm run typecheck && npm run lint && npm run test && npm run build"
+    "validate": "npm run build && npm run typecheck && npm run lint && npm run test"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.3",
