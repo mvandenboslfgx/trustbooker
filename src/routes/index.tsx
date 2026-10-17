@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SearchBar } from "@/components/SearchBar";
 import { serviceCategories } from "@/config/marketplace";
+import { verticals } from "@/config/verticals";
 
 export const Route = createFileRoute("/")({ component: Home });
 
@@ -52,6 +53,19 @@ function Home() {
           </div>
         </div>
         <div className="shell tb-hero-bottom"><span>TRUSTBOOKER / THE SERVICE MARKETPLACE</span><span>DISCOVER <span aria-hidden="true">↘</span> CONNECT <span aria-hidden="true">↘</span> GET IT DONE</span></div>
+      </section>
+
+      <section className="tb-worlds-section">
+        <div className="shell">
+          <div className="tb-section-top"><span className="tb-section-kicker">THREE WORLDS / ONE TRUSTBOOKER</span><Link to="/discover" className="tb-text-arrow">Discover the platform ↗</Link></div>
+          <div className="tb-worlds-header"><h2>One place for the<br/><em>next big thing.</em></h2><p>From getting a job done to finding a job—or finding something to do. Your world, connected.</p></div>
+          <div className="tb-worlds-grid">{verticals.map((vertical, index)=><Link to={vertical.href} key={vertical.id} className="tb-world-card">
+            <div className="tb-world-top"><span>{String(index+1).padStart(2,"0")} / {vertical.eyebrow}</span><span aria-hidden="true">↗</span></div>
+            <span className="tb-world-icon" aria-hidden="true">{vertical.icon}</span><h3>{vertical.label}</h3><p>{vertical.detail}</p>
+            <span className="tb-world-bottom">Explore {vertical.label.toLowerCase()} <span aria-hidden="true">↗</span></span>
+          </Link>)}</div>
+          <div className="tb-world-post"><span>Have something to share with the world?</span><Link to="/create" search={{type:"job"}}>Post a vacancy ↗</Link><Link to="/create" search={{type:"event"}}>Create an event ↗</Link><Link to="/request">Post a service request ↗</Link></div>
+        </div>
       </section>
 
       <section className="tb-benefit-strip">
