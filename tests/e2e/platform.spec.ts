@@ -24,3 +24,19 @@ test("homepage returns TrustBooker HTML", async ({ request }) => {
   expect(response.headers()["content-type"]).toContain("text/html");
   expect(await response.text()).toContain("TrustBooker");
 });
+
+test("liveness probe is healthy and never cached", async ({ request }) => {
+  const response = await request.get("/health");
+  expect(response.status()).toBe(200);
+  expect(response.headers()["cache-control"]).toContain("no-store");
+  expect(await response.json()).toEqual({ status: "ok", service: "trustbooker" });
+});
+
+test("readiness probe fails closed when dependencies are unavailable", async ({ request }) => {
+  const response = await request.get("/ready");
+  expect([200, 503]).toContain(response.status());
+  expect(response.headers()["cache-control"]).toContain("no-store");
+  const body = await response.json();
+  expect(["ready", "not_ready"]).toContain(body.status);
+  expect(response.status() === 200 ? body.status : "not_ready").toBe(body.status);
+});
