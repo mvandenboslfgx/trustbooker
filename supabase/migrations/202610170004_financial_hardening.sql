@@ -89,6 +89,17 @@ begin
     raise exception 'proposal not owned by buyer' using errcode = '42501';
   end if;
 
+  -- Retry-safe: once a proposal already produced a booking for this buyer,
+  -- return the existing booking before checking mutable proposal/request state.
+  select id into v_booking_id
+  from public.bookings
+  where proposal_id = p_proposal_id
+    and buyer_id = v_user_id;
+
+  if v_booking_id is not null then
+    return v_booking_id;
+  end if;
+
   if v_request.status not in ('open', 'matched') then
     raise exception 'request is not bookable' using errcode = '22023';
   end if;
@@ -103,14 +114,6 @@ begin
 
   if coalesce(v_booking_enabled, false) = false then
     raise exception 'bookings are not enabled in this country' using errcode = '55000';
-  end if;
-
-  select id into v_booking_id
-  from public.bookings
-  where proposal_id = p_proposal_id;
-
-  if v_booking_id is not null then
-    return v_booking_id;
   end if;
 
   v_fee := round(v_proposal.amount_minor::numeric * 0.10)::bigint;
