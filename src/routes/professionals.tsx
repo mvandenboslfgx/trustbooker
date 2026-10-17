@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { serviceCategories } from "@/config/marketplace";
+import { completeServiceCreation } from "@/lib/provider-service-submission";
 import {
   bootstrapProviderProfileFn,
   createProviderServiceFn,
@@ -102,7 +103,10 @@ function Professionals() {
     if (!profile) return;
     setBusy("service");
     setMessage("");
-    const form = new FormData(event.currentTarget);
+    // Capture the form before any await: React clears event.currentTarget
+    // after the submit handler yields, even when the backend succeeded.
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
     try {
       const result = await createProviderServiceFn({ data: {
         providerId: profile.id,
@@ -112,13 +116,11 @@ function Professionals() {
         startingPriceMinor: toMinor(String(form.get("startingPrice") ?? "")),
         currency: String(form.get("currency") ?? "GBP"),
       } });
-      setMessage(result.ok ? "Service created. Publish it after your provider profile is active." : result.message);
-      if (result.ok) {
-        event.currentTarget.reset();
-        await router.invalidate();
-      }
+      // A successful database write remains a success even if refreshing
+      // the page's loader fails. Never suggest retrying and creating duplicates.
+      setMessage(await completeServiceCreation(formElement, result, () => router.invalidate()));
     } catch {
-      setMessage("The service could not be created.");
+      setMessage("We could not confirm that the service was saved. Refresh your service list before retrying.");
     } finally {
       setBusy(null);
     }
