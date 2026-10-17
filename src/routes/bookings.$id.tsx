@@ -1,0 +1,184 @@
+import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
+import { useState, type FormEvent } from "react";
+import {
+  getBookingWorkspaceFn,
+  openBookingDisputeFn,
+  transitionBookingFn,
+} from "@/server/booking.functions";
+import { sendMessageFn } from "@/server/interaction.functions";
+
+export const Route = createFileRoute("/bookings/$id")({
+  loader: ({ params }) => getBookingWorkspaceFn({ data: { bookingId: params.id } }),
+  component: BookingWorkspace,
+});
+
+function money(minor: number, currency: string) {
+  try {
+    return new Intl.NumberFormat("en-GB", { style: "currency", currency }).format(minor / 100);
+  } catch {
+    return `${currency} ${(minor / 100).toFixed(2)}`;
+  }
+}
+
+function BookingWorkspace() {
+  const workspace = Route.useLoaderData();
+  const router = useRouter();
+  const [busy, setBusy] = useState<string | null>(null);
+  const [message, setMessage] = useState("");
+
+  if (!workspace) {
+    return (
+      <main className="page-space">
+        <div className="shell narrow empty-state">
+          <span className="eyebrow">Private booking</span>
+          <h1>Booking unavailable.</h1>
+          <p>Only booking participants can open this workspace.</p>
+          <Link to="/dashboard" className="button">Back to dashboard</Link>
+        </div>
+      </main>
+    );
+  }
+
+  const title = typeof workspace.booking.scope_snapshot.request_title === "string"
+    ? workspace.booking.scope_snapshot.request_title
+    : "Service booking";
+
+  async function transition(action: "start_work" | "request_completion" | "confirm_completion" | "cancel") {
+    setBusy(action);
+    setMessage("");
+    try {
+      const result = await transitionBookingFn({ data: { bookingId: workspace.booking.id, action } });
+      setMessage(result.ok ? `Booking updated to ${result.status}.` : result.message);
+      if (result.ok) await router.invalidate();
+    } catch {
+      setMessage("The booking could not be updated.");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function sendMessage(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!workspace.conversation_id) return;
+    setBusy("message");
+    setMessage("");
+    const form = new FormData(event.currentTarget);
+    try {
+      const result = await sendMessageFn({ data: {
+        conversationId: workspace.conversation_id,
+        body: String(form.get("body") ?? ""),
+      } });
+      setMessage(result.ok ? "Message sent." : result.message);
+      if (result.ok) {
+        event.currentTarget.reset();
+        await router.invalidate();
+      }
+    } catch {
+      setMessage("The message could not be sent.");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function openDispute(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setBusy("dispute");
+    setMessage("");
+    const form = new FormData(event.currentTarget);
+    try {
+      const result = await openBookingDisputeFn({ data: {
+        bookingId: workspace.booking.id,
+        reason: String(form.get("reason") ?? ""),
+      } });
+      setMessage(result.ok ? `Dispute opened: ${result.disputeId}` : result.message);
+      if (result.ok) await router.invalidate();
+    } catch {
+      setMessage("The dispute could not be opened.");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  const status = workspace.booking.status;
+  const canCancel = ["accepted", "payment_pending", "booked"].includes(status);
+  const canDispute = ["booked", "in_progress", "completion_pending", "completed"].includes(status) && !workspace.dispute;
+
+  return (
+    <main className="page-space">
+      <div className="shell">
+        <div className="dashboard-head">
+          <div>
+            <span className="eyebrow">{workspace.actor_role} workspace</span>
+            <h1>{title}</h1>
+            <p className="muted">Booking {workspace.booking.id} · {status}</p>
+          </div>
+          <div className="dashboard-actions">
+            <Link to="/providers/$slug" params={{ slug: workspace.provider.slug }} className="button">View professional</Link>
+            <Link to="/dashboard" className="button">Dashboard</Link>
+          </div>
+        </div>
+
+        {message && <div className="notice" role="status">{message}</div>}
+
+        <div className="stats-grid">
+          <div><span>Agreed amount</span><strong>{money(workspace.booking.subtotal_minor, workspace.booking.currency)}</strong></div>
+          <div><span>Success fee</span><strong>{money(workspace.booking.marketplace_fee_minor, workspace.booking.currency)}</strong></div>
+          <div><span>Trust score</span><strong>{workspace.provider.trust_score}</strong></div>
+          <div><span>Status</span><strong>{status.replaceAll("_", " ")}</strong></div>
+        </div>
+
+        <section className="content-card">
+          <div className="section-head">
+            <div><span className="eyebrow">Booking control</span><h2>Next action</h2></div>
+            <p className="section-lede">Status changes are authorized and audited in the database. Payment-enabled markets cannot start work until payment has moved the booking to booked.</p>
+          </div>
+          <div className="dashboard-actions">
+            {workspace.actor_role === "provider" && status === "booked" && <button className="button button-brand" disabled={busy !== null} onClick={() => void transition("start_work")} type="button">Start work</button>}
+            {workspace.actor_role === "provider" && status === "in_progress" && <button className="button button-brand" disabled={busy !== null} onClick={() => void transition("request_completion")} type="button">Request completion</button>}
+            {workspace.actor_role === "buyer" && status === "completion_pending" && <button className="button button-brand" disabled={busy !== null} onClick={() => void transition("confirm_completion")} type="button">Confirm completed</button>}
+            {canCancel && <button className="button" disabled={busy !== null} onClick={() => void transition("cancel")} type="button">Cancel booking</button>}
+          </div>
+        </section>
+
+        <div className="two-col">
+          <section className="content-card">
+            <h2>Booking chat</h2>
+            <div>
+              {workspace.messages.length === 0 ? <p className="muted">No messages yet.</p> : workspace.messages.map((item) => (
+                <div className="review-sample" key={item.id}>
+                  <div><strong>Participant</strong><span>{new Date(item.created_at).toLocaleString("en-GB")}</span></div>
+                  <p>{item.body}</p>
+                </div>
+              ))}
+            </div>
+            {workspace.conversation_id && (
+              <form className="form-card" onSubmit={sendMessage}>
+                <label>Message<textarea name="body" required minLength={1} maxLength={10000} rows={4} placeholder="Keep important booking communication on the transaction record." /></label>
+                <button className="button button-dark" disabled={busy !== null} type="submit">{busy === "message" ? "Sending…" : "Send message"}</button>
+              </form>
+            )}
+          </section>
+
+          <section className="content-card">
+            <h2>Dispute & safety</h2>
+            {workspace.dispute ? (
+              <div className="notice">
+                <strong>Dispute {workspace.dispute.status}</strong>
+                <p>{workspace.dispute.reason}</p>
+                {workspace.dispute.resolution_note && <p>Resolution: {workspace.dispute.resolution_note}</p>}
+              </div>
+            ) : canDispute ? (
+              <form className="form-card" onSubmit={openDispute}>
+                <label>What went wrong?<textarea name="reason" required minLength={10} maxLength={5000} rows={5} /></label>
+                <button className="button" disabled={busy !== null} type="submit">{busy === "dispute" ? "Opening…" : "Open dispute"}</button>
+                <small>Availability is controlled per country. A disabled dispute market will reject this action server-side.</small>
+              </form>
+            ) : (
+              <p className="muted">A dispute is not available for this booking state.</p>
+            )}
+          </section>
+        </div>
+      </div>
+    </main>
+  );
+}
