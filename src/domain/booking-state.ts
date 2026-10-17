@@ -1,4 +1,4 @@
-import type { BookingStatus } from "./models";
+import type { BookingStatus } from "./models.js";
 
 const transitions: Record<BookingStatus, readonly BookingStatus[]> = {
   draft: ["awaiting_provider", "cancelled"],

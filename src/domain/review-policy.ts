@@ -1,4 +1,4 @@
-import type { Booking, Review } from "./models";
+import type { Booking, Review } from "./models.js";
 
 export function isBookingReviewEligible(booking: Booking): boolean {
   return booking.status === "completed";
