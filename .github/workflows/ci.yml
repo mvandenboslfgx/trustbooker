@@ -33,6 +33,8 @@ jobs:
         run: npx supabase start
       - name: Rebuild database from migrations
         run: npx supabase db reset
+      - name: Lint rebuilt database
+        run: npx supabase db lint --local --level warning
       - name: Show migration status
         run: npx supabase migration list --local
       - name: Stop local Supabase
