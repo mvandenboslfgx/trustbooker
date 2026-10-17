@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { setResponseHeaders } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
+import type { Provider } from "@/domain/models";
 
 const requestSchema = z
   .object({
@@ -21,6 +22,31 @@ const requestSchema = z
     { message: "Maximum budget must be greater than or equal to minimum budget." },
   );
 
+const marketplaceSearchSchema = z.object({
+  q: z.string().trim().max(120).optional(),
+  location: z.string().trim().max(160).optional(),
+});
+
+const marketplaceProviderSchema = z.object({
+  id: z.string().uuid(),
+  slug: z.string(),
+  display_name: z.string(),
+  headline: z.string(),
+  country_code: z.string(),
+  locality: z.string(),
+  identity_status: z.string(),
+  business_status: z.string(),
+  trust_score: z.coerce.number(),
+  rating: z.coerce.number().nullable(),
+  review_count: z.coerce.number(),
+  completed_jobs: z.coerce.number(),
+  response_minutes: z.coerce.number().nullable(),
+  categories: z.array(z.string()).nullable(),
+  starting_price_minor: z.coerce.number().nullable(),
+  currency: z.string().nullable(),
+  featured_service: z.string().nullable(),
+});
+
 const noStore = () => {
   setResponseHeaders(
     new Headers({
@@ -29,6 +55,47 @@ const noStore = () => {
     }),
   );
 };
+
+export const searchMarketplaceFn = createServerFn({ method: "GET" })
+  .validator(marketplaceSearchSchema)
+  .handler(async ({ data }) => {
+    const supabase = getSupabaseServerClient();
+    if (!supabase) return { configured: false as const, providers: [] as Provider[] };
+
+    const { data: rows, error } = await supabase.rpc("search_marketplace", {
+      p_query: data.q || null,
+      p_location: data.location || null,
+      p_limit: 48,
+      p_offset: 0,
+    });
+
+    if (error) return { configured: true as const, providers: [] as Provider[] };
+
+    const parsed = z.array(marketplaceProviderSchema).safeParse(rows ?? []);
+    if (!parsed.success) return { configured: true as const, providers: [] as Provider[] };
+
+    const providers: Provider[] = parsed.data.map((row) => ({
+      id: row.id,
+      slug: row.slug,
+      displayName: row.display_name,
+      headline: row.headline,
+      city: row.locality,
+      countryCode: row.country_code,
+      rating: row.rating ?? 0,
+      reviewCount: row.review_count,
+      completedJobs: row.completed_jobs,
+      trustScore: row.trust_score,
+      responseMinutes: row.response_minutes ?? 0,
+      verifiedIdentity: row.identity_status === "verified",
+      verifiedBusiness: row.business_status === "verified",
+      categories: row.categories ?? [],
+      startingPriceMinor: row.starting_price_minor ?? 0,
+      currency: row.currency ?? "GBP",
+      featuredService: row.featured_service ?? row.headline,
+    }));
+
+    return { configured: true as const, providers };
+  });
 
 export const createServiceRequestFn = createServerFn({ method: "POST" })
   .validator(requestSchema)
