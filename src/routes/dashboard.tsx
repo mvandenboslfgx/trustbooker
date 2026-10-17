@@ -1,12 +1,20 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { useState } from "react";
 import { getCurrentUserFn, signOutFn } from "@/server/auth.functions";
-import { getDashboardSummaryFn } from "@/server/marketplace.functions";
+import {
+  getBuyerProposalInboxFn,
+  getDashboardSummaryFn,
+} from "@/server/marketplace.functions";
+import { acceptProposalFn } from "@/server/interaction.functions";
 
 export const Route = createFileRoute("/dashboard")({
   loader: async () => {
-    const [user, summary] = await Promise.all([getCurrentUserFn(), getDashboardSummaryFn()]);
-    return { user, summary };
+    const [user, summary, proposals] = await Promise.all([
+      getCurrentUserFn(),
+      getDashboardSummaryFn(),
+      getBuyerProposalInboxFn(),
+    ]);
+    return { user, summary, proposals };
   },
   component: Dashboard,
 });
@@ -15,10 +23,25 @@ function Metric({ label, value }: { label: string; value: number | null }) {
   return <div><span>{label}</span><strong>{value ?? "—"}</strong></div>;
 }
 
+function formatMoney(minor: number, currency: string): string {
+  try {
+    return new Intl.NumberFormat("en-GB", {
+      style: "currency",
+      currency,
+      maximumFractionDigits: 2,
+    }).format(minor / 100);
+  } catch {
+    return `${currency} ${(minor / 100).toFixed(2)}`;
+  }
+}
+
 function Dashboard() {
-  const { user, summary } = Route.useLoaderData();
+  const { user, summary, proposals } = Route.useLoaderData();
   const navigate = useNavigate();
+  const router = useRouter();
   const [busy, setBusy] = useState(false);
+  const [accepting, setAccepting] = useState<string | null>(null);
+  const [actionMessage, setActionMessage] = useState("");
 
   if (!user) {
     return (
@@ -33,6 +56,24 @@ function Dashboard() {
     );
   }
 
+  async function acceptProposal(proposalId: string) {
+    setAccepting(proposalId);
+    setActionMessage("");
+    try {
+      const result = await acceptProposalFn({ data: { proposalId } });
+      if (!result.ok) {
+        setActionMessage(result.message);
+        return;
+      }
+      setActionMessage(`Booking created securely: ${result.bookingId}`);
+      await router.invalidate();
+    } catch {
+      setActionMessage("The proposal could not be accepted. Please try again.");
+    } finally {
+      setAccepting(null);
+    }
+  }
+
   return (
     <main className="page-space">
       <div className="shell">
@@ -40,7 +81,50 @@ function Dashboard() {
           <div><span className="eyebrow">Private workspace</span><h1>Dashboard</h1><p className="muted">Signed in as {user.email ?? "verified user"}</p></div>
           <div className="dashboard-actions"><Link to="/request" className="button button-dark">Post a job</Link><button className="button" disabled={busy} onClick={async () => { setBusy(true); await signOutFn(); await navigate({ to: "/login" }); }} type="button">Sign out</button></div>
         </div>
-        <div className="stats-grid"><Metric label="Open requests" value={summary?.openRequests ?? null} /><Metric label="Active bookings" value={summary?.activeBookings ?? null} /><Metric label="Completed bookings" value={summary?.completedBookings ?? null} /><Metric label="Trust actions" value={null} /></div>
+        <div className="stats-grid"><Metric label="Open requests" value={summary?.openRequests ?? null} /><Metric label="Active bookings" value={summary?.activeBookings ?? null} /><Metric label="Completed bookings" value={summary?.completedBookings ?? null} /><Metric label="Offers received" value={proposals.length} /></div>
+
+        <section className="content-card">
+          <div className="section-head">
+            <div><span className="eyebrow">Your offers</span><h2>Proposal inbox</h2></div>
+            <p className="section-lede">Accepting an offer creates the booking server-side. TrustBooker calculates the success fee in the database; the browser cannot override the financial record.</p>
+          </div>
+          {actionMessage && <div className="notice" role="status">{actionMessage}</div>}
+          {proposals.length === 0 ? (
+            <p className="muted">No proposals have arrived for your requests yet.</p>
+          ) : (
+            <div className="provider-grid">
+              {proposals.map((proposal) => (
+                <article className="provider-card" key={proposal.id}>
+                  <div className="provider-card-top">
+                    <div>
+                      <span className="eyebrow">{proposal.requestTitle}</span>
+                      <h3>{proposal.provider?.display_name ?? "Professional"}</h3>
+                    </div>
+                    {proposal.provider && <strong>Trust {proposal.provider.trust_score}</strong>}
+                  </div>
+                  <p>{proposal.message || "No additional message."}</p>
+                  <div className="rating-line">
+                    <strong>{formatMoney(proposal.amountMinor, proposal.currency)}</strong>
+                    <span>{proposal.status}</span>
+                  </div>
+                  {proposal.status === "sent" && ["open", "matched"].includes(proposal.requestStatus) ? (
+                    <button
+                      className="button button-brand"
+                      disabled={accepting === proposal.id}
+                      onClick={() => void acceptProposal(proposal.id)}
+                      type="button"
+                    >
+                      {accepting === proposal.id ? "Securing booking…" : "Accept offer"}
+                    </button>
+                  ) : (
+                    <span className="muted">This offer is no longer actionable.</span>
+                  )}
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
+
         <div className="content-card"><h2>Your marketplace activity</h2><p className="muted">Metrics are fetched through the signed-in user session and RLS. A dash means this environment has no linked marketplace database yet; TrustBooker does not fabricate activity.</p></div>
       </div>
     </main>
