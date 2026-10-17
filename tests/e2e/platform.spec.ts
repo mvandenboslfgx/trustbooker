@@ -1,6 +1,15 @@
 import { expect, test } from "@playwright/test";
 
-const publicRoutes = ["/", "/marketplace", "/pricing", "/trust-safety", "/privacy", "/terms"];
+const publicRoutes = [
+  "/",
+  "/marketplace",
+  "/pricing",
+  "/trust-safety",
+  "/privacy",
+  "/terms",
+  "/login",
+  "/recover",
+];
 
 test("critical public routes render successfully", async ({ request }) => {
   for (const path of publicRoutes) {
