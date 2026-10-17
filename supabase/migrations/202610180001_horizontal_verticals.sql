@@ -57,6 +57,8 @@ alter table public.event_posts enable row level security;
 
 revoke all on public.vertical_market_launches,public.job_posts,public.event_posts from public,anon,authenticated;
 grant select on public.vertical_market_launches to anon,authenticated;
+grant select (employer_user_id) on public.job_posts to authenticated;
+grant select (organizer_user_id) on public.event_posts to authenticated;
 grant select (id,title,description,country_code,locality,employment_type,work_mode,salary_min_minor,salary_max_minor,currency,status,created_at) on public.job_posts to anon,authenticated;
 grant select (id,title,description,country_code,locality,venue_name,is_online,starts_at,ends_at,capacity,admission_type,status,created_at) on public.event_posts to anon,authenticated;
 grant insert (title,description,country_code,locality,employment_type,work_mode,salary_min_minor,salary_max_minor,currency) on public.job_posts to authenticated;
