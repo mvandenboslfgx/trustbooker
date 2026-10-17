@@ -35,6 +35,27 @@ export const submitProposalFn = createServerFn({ method: "POST" })
     return { ok: true as const, proposalId: proposal.id, status: proposal.status };
   });
 
+export const acceptProposalFn = createServerFn({ method: "POST" })
+  .validator(z.object({ proposalId: uuid }))
+  .handler(async ({ data }) => {
+    noStore();
+    const auth = await requireUser();
+    if (!auth.userId || !auth.supabase) return { ok: false as const, message: auth.error ?? "Not authorized." };
+
+    const { data: bookingId, error } = await auth.supabase.rpc("accept_proposal_and_create_booking", {
+      p_proposal_id: data.proposalId,
+    });
+
+    if (error || typeof bookingId !== "string") {
+      return {
+        ok: false as const,
+        message: "This proposal could not be accepted. It may no longer be available or bookings may still be gated in your country.",
+      };
+    }
+
+    return { ok: true as const, bookingId };
+  });
+
 export const submitReviewFn = createServerFn({ method: "POST" })
   .validator(z.object({ bookingId: uuid, providerId: uuid, rating: z.number().int().min(1).max(5), body: z.string().trim().min(10).max(5_000) }))
   .handler(async ({ data }) => {
