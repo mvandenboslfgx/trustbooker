@@ -196,7 +196,7 @@ describe("local Supabase marketplace flow", () => {
       subtotal_minor: 12_345,
       marketplace_fee_minor: 1_235,
       currency: "GBP",
-      status: "accepted",
+      status: "booked",
     });
 
     const { count, error: countError } = await service
