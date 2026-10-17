@@ -65,3 +65,19 @@ test("account data export fails closed without a usable account session", async 
     expect(body).toEqual({ error: "Authentication required." });
   }
 });
+
+
+test("request IDs accept safe correlation values but reject untrusted input", async ({ request }) => {
+  const valid = "trustbooker-correlation-12345";
+  const accepted = await request.get("/health", { headers: { "x-request-id": valid } });
+  expect(accepted.headers()["x-request-id"]).toBe(valid);
+
+  const rejected = await request.get("/health", {
+    headers: { "x-request-id": "<script>untrusted-id</script>" },
+  });
+  const sanitized = rejected.headers()["x-request-id"];
+  expect(sanitized).toBeTruthy();
+  expect(sanitized).not.toContain("<");
+  expect(sanitized).not.toContain("script");
+  expect(sanitized).not.toBe("<script>untrusted-id</script>");
+});
