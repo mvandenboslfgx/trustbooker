@@ -1,5 +1,6 @@
 import { defineConfig } from "vite";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
+import { cloudflare } from "@cloudflare/vite-plugin";
 import viteReact from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import { fileURLToPath, URL } from "node:url";
@@ -16,5 +17,5 @@ export default defineConfig({
       "@config": fileURLToPath(new URL("./src/config", import.meta.url)),
     },
   },
-  plugins: [tanstackStart(), viteReact(), tailwindcss()],
+  plugins: [cloudflare({ viteEnvironment: { name: "ssr" } }), tanstackStart(), viteReact(), tailwindcss()],
 });
