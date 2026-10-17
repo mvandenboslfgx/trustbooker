@@ -5,23 +5,24 @@ This deployment uses Cloudflare Workers + the Vite plugin and TanStack Start SSR
 ## Review gate before deployment
 
 - Only deploy the `mvandenboslfgx/trustbooker` repo, Worker name `trustbooker`.
-- The initial deployment must use a test workers.dev address, not the production domain.
-- Do not share or reuse the Tvelio deployment token. Use a dedicated token with permissions scoped to the relevant Cloudflare account.
+- Test on the `workers.dev` origin before attaching the main domain.
+- Use a dedicated Cloudflare deployment token instead of Tvelio credentials.
 - Do not deploy until `npm ci`, `npm run validate`, and `npx wrangler deploy --dry-run` pass.
-- Never put secret values in `wrangler.jsonc`, GitHub source, logs or screenshots.
-- The Cloudflare app must have valid server-side `SUPABASE_URL` and `SUPABASE_ANON_KEY` bindings. Frontend `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are public client credentials and must be present for browser builds. The service-role key must never be shipped to the browser.
-- Supabase Auth must explicitly allow the eventual public origin and recovery redirect. Test signup and recovery before opening the domain.
-- Payments/payouts and country launch gates stay disabled until separate operational approval.
-- Cloudflare dashboard Git builds: build `npm run build`, deploy `npx wrangler deploy`, root `/`, preview builds disabled during initial setup.
+- Never commit secrets, environment secret values or credentials.
+- The publicly readable TrustBooker Supabase URL is tracked under `wrangler.jsonc` `vars.SUPABASE_URL` to avoid losing it on GitHub deployment.
+- `keep_vars: true` preserves dashboard-defined runtime text variables on Wrangler deploy. Without it, `npx wrangler deploy` replaces those variables and server functions can return `not_configured` after initially working.
+- The `SUPABASE_ANON_KEY` binding is configured separately in the Cloudflare dashboard as a Secret, and must use the TrustBooker Supabase publishable key. Never use `service_role` or `sb_secret_` for this binding.
+- Frontend `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, and `VITE_APP_URL` are build-time public settings and must be configured in Workers Builds. Build variables do not automatically become runtime bindings.
+- Supabase Auth must explicitly allow the public origin and recovery redirect. Test signup/recovery before opening the main domain.
+- Payments, payouts and country launch gates remain off until separate operational approval.
 
 ## Verification
 
-1. `npm ci`
-2. `npm run validate`
-3. `npx wrangler deploy --dry-run`
-4. Staging deployment and `/health` test.
-5. `/ready` dependency check against the dedicated TrustBooker Supabase.
-6. Browser/account journey tests (including RLS isolation, booking and recovery).
-7. Only after checks pass, attach `trustbooker.com` and configure `www` redirection.
+1. `npm ci` and `npm run validate`.
+2. `npx wrangler deploy --dry-run`.
+3. Verify Cloudflare's build check passes for the latest main commit.
+4. Recheck `/ready` **after every deploy**, not only after manually configuring environment variables.
+5. Test `/login` new-account creation and email confirmation with a private test email.
+6. Verify provider/buyer roles, RLS, and session continuity before connecting the main domain.
 
-This file is operational guidance, not evidence that deployment has been completed.
+This document describes the setup; it is not proof that a full production launch or account registration succeeded.
