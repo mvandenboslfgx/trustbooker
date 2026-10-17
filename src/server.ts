@@ -26,7 +26,10 @@ function withSecurityHeaders(response: Response, requestId: string): Response {
 
 export default createServerEntry({
   async fetch(request, opts) {
-    const requestId = request.headers.get("x-request-id")?.slice(0, 128) || crypto.randomUUID();
+    const incomingId = request.headers.get("x-request-id");
+    const requestId = incomingId && /^[A-Za-z0-9][A-Za-z0-9._-]{7,63}$/.test(incomingId)
+      ? incomingId
+      : crypto.randomUUID();
     const response = await startHandler(request, opts);
     return withSecurityHeaders(response, requestId);
   },
