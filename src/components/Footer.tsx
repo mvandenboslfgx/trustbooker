@@ -4,14 +4,15 @@ export function Footer() {
   return (
     <footer className="site-footer">
       <div className="shell footer-grid">
-        <div>
-          <div className="brand footer-brand"><span className="brand-mark">T</span><span>TrustBooker</span></div>
-          <p className="muted footer-copy">A global services marketplace designed around verified reputation, transparent economics and accountable bookings.</p>
+        <div className="tb-footer-intro">
+          <Link to="/" className="brand footer-brand" aria-label="TrustBooker homepage"><span className="brand-mark">T<span className="brand-dot">.</span></span><span>trustbooker<span className="brand-period">.</span></span></Link>
+          <p className="footer-copy">Good work begins with real trust. A service marketplace designed for clearer choices, accountable work and fairer opportunities.</p>
         </div>
-        <div><strong>Marketplace</strong><Link to="/marketplace">Explore services</Link><Link to="/request">Post a job</Link><Link to="/pricing">Pricing</Link></div>
-        <div><strong>Trust</strong><Link to="/trust-safety">Trust & safety</Link><Link to="/privacy">Privacy</Link><Link to="/terms">Terms</Link><a href="mailto:support@trustbooker.com">Support</a></div>
-        <div><strong>Company</strong><span>London · Amsterdam</span><span>© {new Date().getFullYear()} TrustBooker</span></div>
+        <div><strong>Discover</strong><Link to="/marketplace">Explore services</Link><Link to="/request">Post a job</Link><Link to="/pricing">How pricing works</Link></div>
+        <div><strong>Participate</strong><Link to="/professionals">For professionals</Link><Link to="/login">Your account</Link><Link to="/dashboard">Your workspace</Link></div>
+        <div><strong>The essentials</strong><Link to="/trust-safety">Trust & safety</Link><Link to="/privacy">Privacy policy</Link><Link to="/terms">Terms of service</Link><a href="mailto:support@trustbooker.com">Contact support</a></div>
       </div>
+      <div className="shell tb-footer-bottom"><span>© {new Date().getFullYear()} TrustBooker. Built on clarity.</span><span>Free core access · No paid placement · Market-by-market rollout</span></div>
     </footer>
   );
 }

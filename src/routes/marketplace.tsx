@@ -1,8 +1,7 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { z } from "zod";
 import { SearchBar } from "@/components/SearchBar";
 import { ProviderCard } from "@/components/ProviderCard";
-import { demoProviders } from "@/data/demo";
 import { serviceCategories } from "@/config/marketplace";
 import { searchMarketplaceFn } from "@/server/marketplace.functions";
 
@@ -17,58 +16,26 @@ export const Route = createFileRoute("/marketplace")({
 function Marketplace() {
   const search = Route.useSearch();
   const result = Route.useLoaderData();
-  const term = search.q?.toLowerCase() ?? "";
-  const location = search.location?.toLowerCase() ?? "";
-
-  const previewProviders = demoProviders.filter((provider) => {
-    const categoryMatch = serviceCategories.some(
-      (category) => category.name.toLowerCase() === term && provider.categories.includes(category.slug),
-    );
-    const termMatch =
-      !term ||
-      `${provider.displayName} ${provider.headline} ${provider.categories.join(" ")}`
-        .toLowerCase()
-        .includes(term) ||
-      categoryMatch;
-    const locationMatch =
-      !location ||
-      `${provider.city} ${provider.countryCode}`.toLowerCase().includes(location);
-    return termMatch && locationMatch;
-  });
-
-  const providers = result.configured ? result.providers : previewProviders;
+  const providers = result.configured ? result.providers : [];
 
   return (
-    <main className="page-space">
+    <main className="page-space tb-market-page">
       <section className="shell">
-        <span className="eyebrow">Marketplace</span>
-        <h1 className="page-title">Find work you can trust.</h1>
-        <p className="page-intro">
-          Search by service and location, compare earned reputation signals and inspect a professional before you book.
-        </p>
-        <SearchBar />
-        {!result.configured && (
-          <div className="notice" role="status">
-            Preview mode: connect Supabase to replace these example profiles with the live marketplace directory.
-          </div>
-        )}
-        <div className="market-toolbar">
-          <span>{providers.length} {result.configured ? "live" : "preview"} matches</span>
-          <div className="chips">
-            <span className="chip active">Earned ranking</span>
-            <span className="chip">Trust weighted</span>
-            <span className="chip">No paid boost</span>
+        <div className="tb-market-intro">
+          <span className="tb-section-kicker">THE MARKETPLACE / DISCOVER</span>
+          <div className="tb-market-heading"><h1 className="page-title">Find your next<br/><em>great professional.</em></h1><p className="page-intro">Search by service and location. Compare real profiles and make your next decision with more confidence.</p></div>
+          <SearchBar />
+        </div>
+        {!result.configured && <div className="notice" role="status">The marketplace directory is temporarily unavailable. No example listings are shown as real businesses.</div>}
+        <div className="tb-filter-section">
+          <div className="tb-market-toolbar"><strong>{providers.length} {providers.length === 1 ? "professional" : "professionals"} found</strong><span>Ranked by relevance, never paid placement</span></div>
+          <div className="tb-category-pills" aria-label="Browse by service">
+            <Link to="/marketplace" search={{}} className={!search.q ? "tb-pill active" : "tb-pill"}>All services</Link>
+            {serviceCategories.map((category) => <Link key={category.slug} to="/marketplace" search={{ q: category.name, location: search.location }} className={"tb-pill" + (search.q === category.name ? " active" : "")}>{category.name}</Link>)}
           </div>
         </div>
-        <div className="provider-grid">
-          {providers.map((provider) => <ProviderCard key={provider.id} provider={provider} />)}
-        </div>
-        {providers.length === 0 && (
-          <div className="empty-state">
-            <h2>No matching professionals yet.</h2>
-            <p>Try a broader service or location. TrustBooker never invents live marketplace results.</p>
-          </div>
-        )}
+        {providers.length > 0 ? <div className="provider-grid tb-market-results">{providers.map((provider) => <ProviderCard key={provider.id} provider={provider} />)}</div> :
+          <div className="tb-market-empty"><div className="tb-empty-symbol">↗</div><div><span className="tb-section-kicker">MARKET-BY-MARKET ROLLOUT</span><h2>{search.q || search.location ? "No matches just yet." : "Something good is taking shape."}</h2><p>We only show real professionals in markets open for discovery. Try another search, or join early as a professional while new areas prepare to launch.</p><div className="tb-inline-actions"><Link to="/marketplace" search={{}} className="button button-dark">Explore all categories</Link><Link to="/professionals" className="button">Join as a professional ↗</Link></div></div></div>}
       </section>
     </main>
   );

@@ -7,16 +7,13 @@ export function SearchBar({ dark = false }: { dark?: boolean }) {
   const [location, setLocation] = useState("");
 
   return (
-    <form
-      className={`search-bar ${dark ? "search-bar-dark" : ""}`}
-      onSubmit={(event) => {
-        event.preventDefault();
-        void navigate({ to: "/marketplace", search: { q: query || undefined, location: location || undefined } });
-      }}
-    >
-      <label><span>What do you need?</span><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="e.g. electrician, cleaner, web designer" /></label>
-      <label><span>Where?</span><input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="City or postcode" /></label>
-      <button className="button button-brand" type="submit">Search professionals</button>
+    <form className={"search-bar " + (dark ? "search-bar-dark" : "")} role="search" onSubmit={(event) => {
+      event.preventDefault();
+      void navigate({ to: "/marketplace", search: { q: query.trim() || undefined, location: location.trim() || undefined } });
+    }}>
+      <label><span>What are you looking for?</span><input aria-label="Service or keyword" value={query} maxLength={120} onChange={(e) => setQuery(e.target.value)} placeholder="Service, skill or project" /></label>
+      <label><span>Where?</span><input aria-label="City or postcode" value={location} maxLength={160} onChange={(e) => setLocation(e.target.value)} placeholder="City or postcode" /></label>
+      <button className="button button-dark tb-search-button" type="submit">Find services <span aria-hidden="true">↗</span></button>
     </form>
   );
 }
