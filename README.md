@@ -19,7 +19,7 @@ This repository contains a premium front-end, domain foundation, trust-score and
 
 ## Commands
 ```bash
-npm ci
+npm install
 npm run dev
 npm run typecheck
 npm run lint
