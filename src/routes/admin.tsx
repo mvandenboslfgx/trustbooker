@@ -101,23 +101,37 @@ function AdminPage() {
   }
 
   return (
-    <main className="page-space">
+    <main className="page-space tb-ops-page">
       <div className="shell">
-        <div className="dashboard-head">
+        <div className="tb-ops-hero">
           <div>
-            <span className="eyebrow">Trust operations</span>
-            <h1>Verification & moderation</h1>
-            <p className="muted">Only approve evidence you have actually checked. Provider, review and dispute decisions are written to the audit trail.</p>
+            <span className="tb-section-kicker">ADMINISTRATION / OPERATIONS</span>
+            <h1>Every detail.<br/><em>Under control.</em></h1>
+            <p>Review professionals, protect reputation and resolve disputes. Decisions are authorized in the database and written to an audit trail.</p>
+            <div className="tb-ops-hero-links"><Link to="/dashboard" className="button button-brand">Open my dashboard ↗</Link><Link to="/account" className="button tb-outline-light">Account security</Link></div>
           </div>
-          <Link to="/dashboard" className="button">Dashboard</Link>
+          <aside className="tb-ops-access">
+            <span className="tb-ops-access-icon">✳</span>
+            <span className="tb-ops-access-label">ACCESS LEVEL</span>
+            <strong>Administration</strong>
+            <p>Only authorized staff can view these moderation tools.</p>
+            <div className="tb-ops-access-bottom"><span className="tb-live-dot"></span> Protected workspace</div>
+          </aside>
         </div>
 
+        <div className="tb-ops-metrics">
+          <div><span>01 / PROVIDERS</span><strong>{queue.providers.length}</strong><small>Waiting for verification</small></div>
+          <div><span>02 / REPUTATION</span><strong>{reviews.reviews.length}</strong><small>Reviews awaiting decisions</small></div>
+          <div><span>03 / SAFETY</span><strong>{disputes.disputes.length}</strong><small>Unresolved disputes</small></div>
+          <div><span>04 / FINANCIAL</span><strong className="tb-ops-off">OFF</strong><small>Payments and payouts disabled</small></div>
+        </div>
+        <div className="tb-ops-section-title"><div><span className="tb-section-kicker">YOUR REVIEW QUEUES</span><h2>Trust operations.</h2></div><p>Nothing should be marked verified without genuine supporting evidence.</p></div>
         {message && <div className="notice" role="status">{message}</div>}
 
-        <section className="content-card">
-          <div className="section-head"><div><span className="eyebrow">Providers</span><h2>Verification queue</h2></div><p className="section-lede">Approval marks identity and business verification as verified and activates the provider.</p></div>
+        <section className="content-card tb-ops-section">
+          <div className="section-head"><div><span className="eyebrow">Providers</span><h2>Verification queue</h2></div><p className="section-lede">Approval grants verified status. Approve only after checking real identity and business evidence.</p></div>
           {queue.providers.length === 0 ? (
-            <p className="muted">There are no provider profiles waiting for verification.</p>
+            <p className="muted">No professionals awaiting verification.</p>
           ) : (
             <div className="provider-grid">
               {queue.providers.map((provider) => (
@@ -144,10 +158,10 @@ function AdminPage() {
           )}
         </section>
 
-        <section className="content-card">
-          <div className="section-head"><div><span className="eyebrow">Reputation</span><h2>Pending reviews</h2></div><p className="section-lede">Publishing re-checks the completed booking link, marks the review verified and recalculates rating and Trust Score server-side.</p></div>
+        <section className="content-card tb-ops-section">
+          <div className="section-head"><div><span className="eyebrow">Reputation</span><h2>Pending reviews</h2></div><p className="section-lede">Only booking-backed reviews are eligible. Check the evidence before publishing.</p></div>
           {reviews.reviews.length === 0 ? (
-            <p className="muted">There are no reviews waiting for moderation.</p>
+            <p className="muted">No reviews awaiting moderation.</p>
           ) : (
             <div className="provider-grid">
               {reviews.reviews.map((review) => (
@@ -169,10 +183,10 @@ function AdminPage() {
           )}
         </section>
 
-        <section className="content-card">
+        <section className="content-card tb-ops-section">
           <div className="section-head"><div><span className="eyebrow">Safety</span><h2>Open disputes</h2></div><p className="section-lede">This queue resolves marketplace state only. Refunds or payouts must be handled by the payment ledger once payments are enabled.</p></div>
           {disputes.disputes.length === 0 ? (
-            <p className="muted">There are no open disputes.</p>
+            <p className="muted">No disputes currently open.</p>
           ) : (
             <div className="provider-grid">
               {disputes.disputes.map((dispute) => (

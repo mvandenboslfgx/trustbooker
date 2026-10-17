@@ -80,19 +80,22 @@ function Dashboard() {
   }
 
   return (
-    <main className="page-space">
+    <main className="page-space tb-dashboard-page">
       <div className="shell">
-        <div className="dashboard-head">
-          <div><span className="eyebrow">Private workspace</span><h1>Dashboard</h1><p className="muted">Signed in as {user.email ?? "verified user"}</p></div>
+        <section className="tb-dashboard-hero">
+          <div><span className="tb-section-kicker">YOUR PRIVATE WORKSPACE</span><h1>Make good things<br/><em>happen here.</em></h1><p>Welcome back. Your requests, bookings and next steps, all in one clear place.</p><span className="tb-dash-email">Signed in as {user.email ?? "your account"}</span></div>
+          <div className="tb-dashboard-hero-actions"><Link to="/request" className="button button-brand">Post a job ↗</Link><Link to="/professionals" className="button tb-outline-light">My professional profile</Link></div>
+        </section>
+        <div className="tb-dash-toolbar">
+          <div><span className="tb-section-kicker">AT A GLANCE</span><h2>Your activity</h2></div>
           <div className="dashboard-actions">
-            <Link to="/request" className="button button-dark">Post a job</Link>
-            <Link to="/professionals" className="button">Professional workspace</Link>
-            <Link to="/account" className="button">Account</Link>
-            {staff && <Link to="/admin" className="button">Trust operations</Link>}
+            {staff && <Link to="/admin" className="button">Operations ↗</Link>}
+            <Link to="/account" className="button">Account & privacy</Link>
             <button className="button" disabled={busy} onClick={async () => { setBusy(true); await signOutFn(); await navigate({ to: "/login" }); }} type="button">Sign out</button>
           </div>
         </div>
-        <div className="stats-grid"><Metric label="Open requests" value={summary?.openRequests ?? null} /><Metric label="Active bookings" value={summary?.activeBookings ?? null} /><Metric label="Completed bookings" value={summary?.completedBookings ?? null} /><Metric label="Offers received" value={proposals.length} /></div>
+        <div className="stats-grid tb-dash-stats"><Metric label="Open requests" value={summary?.openRequests ?? null} /><Metric label="Active bookings" value={summary?.activeBookings ?? null} /><Metric label="Completed bookings" value={summary?.completedBookings ?? null} /><Metric label="Offers received" value={proposals.length} /></div>
+        <div className="tb-dash-shortcuts"><Link to="/request"><span className="tb-shortcut-icon">↗</span><strong>Start something new</strong><small>Describe the work you need</small></Link><Link to="/professionals"><span className="tb-shortcut-icon">✳</span><strong>Manage my services</strong><small>Update your professional profile</small></Link><Link to="/account"><span className="tb-shortcut-icon">◎</span><strong>Account & security</strong><small>Manage sessions and your data</small></Link></div>
 
         <section className="content-card">
           <div className="section-head"><div><span className="eyebrow">Transactions</span><h2>Your bookings</h2></div><p className="section-lede">Open the participant workspace for booking status, chat, completion confirmation and dispute controls.</p></div>
@@ -154,7 +157,7 @@ function Dashboard() {
           )}
         </section>
 
-        <div className="content-card"><h2>Your marketplace activity</h2><p className="muted">Metrics are fetched through the signed-in user session and RLS. A dash means this environment has no linked marketplace database yet; TrustBooker does not fabricate activity.</p></div>
+        <div className="tb-dash-footer-note"><span aria-hidden="true">✳</span><p>Activity is loaded securely from your own account. We never invent jobs, reviews or booking statistics.</p></div>
       </div>
     </main>
   );
