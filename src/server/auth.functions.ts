@@ -109,6 +109,22 @@ export const signOutFn = createServerFn({ method: "POST" }).handler(async () => 
   const supabase = getSupabaseServerClient();
   if (!supabase) return { ok: true as const };
 
-  await supabase.auth.signOut();
+  await supabase.auth.signOut({ scope: "local" });
+  return { ok: true as const };
+});
+
+export const signOutAllSessionsFn = createServerFn({ method: "POST" }).handler(async () => {
+  noStore();
+  const supabase = getSupabaseServerClient();
+  if (!supabase) return { ok: true as const };
+
+  const { error } = await supabase.auth.signOut({ scope: "global" });
+  if (error) {
+    return {
+      ok: false as const,
+      message: "All sessions could not be revoked. Please try again.",
+    };
+  }
+
   return { ok: true as const };
 });
