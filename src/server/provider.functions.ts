@@ -15,6 +15,24 @@ const providerSchema = z.object({
   locality: z.string().trim().min(2).max(160),
 });
 
+const providerRecordSchema = z.object({
+  id: z.string().uuid(),
+  slug: z.string(),
+  display_name: z.string(),
+  headline: z.string(),
+  description: z.string(),
+  country_code: z.string(),
+  locality: z.string(),
+  status: z.enum(["draft", "active", "paused", "suspended"]),
+  identity_status: z.enum(["unverified", "pending", "verified", "failed", "expired"]),
+  business_status: z.enum(["unverified", "pending", "verified", "failed", "expired"]),
+  trust_score: z.number(),
+  rating: z.number().nullable(),
+  review_count: z.number(),
+  completed_jobs: z.number(),
+  response_minutes: z.number().nullable(),
+});
+
 export const getMyProviderProfileFn = createServerFn({ method: "GET" }).handler(async () => {
   noStore();
   const supabase = getSupabaseServerClient();
@@ -23,14 +41,11 @@ export const getMyProviderProfileFn = createServerFn({ method: "GET" }).handler(
   const { data: auth, error: authError } = await supabase.auth.getUser();
   if (authError || !auth.user) return null;
 
-  const { data, error } = await supabase
-    .from("provider_profiles")
-    .select("id,slug,display_name,headline,description,country_code,locality,status,identity_status,business_status,trust_score,rating,review_count,completed_jobs,response_minutes")
-    .eq("owner_user_id", auth.user.id)
-    .maybeSingle();
+  const { data, error } = await supabase.rpc("get_my_provider_profile");
+  if (error || data == null) return null;
 
-  if (error || !data) return null;
-  return data;
+  const parsed = providerRecordSchema.safeParse(data);
+  return parsed.success ? parsed.data : null;
 });
 
 export const bootstrapProviderProfileFn = createServerFn({ method: "POST" })
