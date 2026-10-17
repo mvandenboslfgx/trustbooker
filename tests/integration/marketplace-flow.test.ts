@@ -34,13 +34,13 @@ let bookingId = "";
 const runId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 const password = `TrustBooker-${runId}-Aa1!`;
 
-async function createAuthenticatedClient(kind: "buyer" | "provider") {
-  const email = `${kind}-${runId}@example.test`;
+async function createAuthenticatedClient(kind: "buyer" | "provider", suffix = "") {
+  const email = `${kind}${suffix}-${runId}@example.test`;
   const { data: created, error: createError } = await service.auth.admin.createUser({
     email,
     password,
     email_confirm: true,
-    user_metadata: { display_name: `${kind} ${runId}` },
+    user_metadata: { display_name: `${kind}${suffix} ${runId}` },
   });
 
   expect(createError).toBeNull();
@@ -206,6 +206,42 @@ describe("local Supabase marketplace flow", () => {
 
     expect(countError).toBeNull();
     expect(count).toBe(1);
+  });
+
+  it("blocks account deletion requests while marketplace activity is active", async () => {
+    const { data, error } = await buyer.rpc("request_account_deletion");
+    expect(data).toBeNull();
+    expect(error).not.toBeNull();
+    expect(error?.message).toContain("active marketplace activity");
+  });
+
+  it("allows an idle user to request and cancel account deletion", async () => {
+    const idle = await createAuthenticatedClient("buyer", "-idle");
+
+    const requested = await idle.client.rpc("request_account_deletion");
+    expect(requested.error).toBeNull();
+    expect(typeof requested.data).toBe("string");
+
+    const { data: pending, error: pendingError } = await idle.client
+      .from("account_deletion_requests")
+      .select("id,status,requested_at")
+      .single();
+
+    expect(pendingError).toBeNull();
+    expect(pending?.status).toBe("pending");
+
+    const cancelled = await idle.client.rpc("cancel_account_deletion");
+    expect(cancelled.error).toBeNull();
+    expect(cancelled.data).toBe(true);
+
+    const { data: cancelledRow, error: cancelledError } = await idle.client
+      .from("account_deletion_requests")
+      .select("status,cancelled_at")
+      .single();
+
+    expect(cancelledError).toBeNull();
+    expect(cancelledRow?.status).toBe("cancelled");
+    expect(cancelledRow?.cancelled_at).toBeTruthy();
   });
 
   it("blocks direct client manipulation of booking money state", async () => {
