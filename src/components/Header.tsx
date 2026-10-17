@@ -10,6 +10,7 @@ export function Header() {
         </Link>
         <nav className="main-nav" aria-label="Main navigation">
           <Link to="/marketplace">Find services</Link>
+          <Link to="/professionals">For professionals</Link>
           <Link to="/trust-safety">Trust & safety</Link>
           <Link to="/pricing">Pricing</Link>
         </nav>
