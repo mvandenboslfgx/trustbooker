@@ -134,3 +134,52 @@ export const getDashboardSummaryFn = createServerFn({ method: "GET" }).handler(a
     completedBookings: completedBookings.count ?? 0,
   };
 });
+
+export const getBuyerProposalInboxFn = createServerFn({ method: "GET" }).handler(async () => {
+  noStore();
+  const supabase = getSupabaseServerClient();
+  if (!supabase) return [];
+
+  const { data: auth, error: authError } = await supabase.auth.getUser();
+  if (authError || !auth.user) return [];
+
+  const { data: requests, error: requestError } = await supabase
+    .from("service_requests")
+    .select("id,title,status")
+    .eq("buyer_id", auth.user.id)
+    .order("created_at", { ascending: false });
+
+  if (requestError || !requests?.length) return [];
+
+  const requestIds = requests.map((request) => request.id);
+  const { data: proposals, error: proposalError } = await supabase
+    .from("proposals")
+    .select("id,request_id,provider_id,amount_minor,currency,message,status,created_at")
+    .in("request_id", requestIds)
+    .order("created_at", { ascending: false });
+
+  if (proposalError || !proposals?.length) return [];
+
+  const providerIds = [...new Set(proposals.map((proposal) => proposal.provider_id))];
+  const { data: providers } = await supabase
+    .from("provider_profiles")
+    .select("id,slug,display_name,trust_score,rating")
+    .in("id", providerIds);
+
+  const requestById = new Map(requests.map((request) => [request.id, request]));
+  const providerById = new Map((providers ?? []).map((provider) => [provider.id, provider]));
+
+  return proposals.map((proposal) => ({
+    id: proposal.id,
+    requestId: proposal.request_id,
+    requestTitle: requestById.get(proposal.request_id)?.title ?? "Service request",
+    requestStatus: requestById.get(proposal.request_id)?.status ?? "open",
+    providerId: proposal.provider_id,
+    provider: providerById.get(proposal.provider_id) ?? null,
+    amountMinor: proposal.amount_minor,
+    currency: proposal.currency,
+    message: proposal.message,
+    status: proposal.status,
+    createdAt: proposal.created_at,
+  }));
+});
