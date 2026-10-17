@@ -10,7 +10,7 @@ This document describes the intended client boundary enforced by the migration t
 | Proposals | None | Buyer of request or owning provider | Active provider may submit one eligible proposal | Status transitions/acceptance |
 | Bookings | None | Buyer/provider participant | None | Creation, status, money, scope snapshot |
 | Booking events | None | Participants | None | Append-only transaction events |
-| Reviews | Published verified reviews for discoverable providers | Same public reviews; buyer can see through transaction context | Buyer may submit against own completed booking only | Publication, moderation, verified flag |
+| Reviews | Published safe columns | Published reviews plus the buyer's own submissions/status | Buyer may submit against own completed booking only | Publication, moderation, verified flag |
 | Messages | None | Conversation member | Member may insert body only; sender defaults to auth user | Membership/conversation creation |
 | Disputes | None | Booking participants | None | Open/status/evidence/resolution |
 | Reports | None | Reporter owns | Reporter may submit | Triage/action/dismissal |
@@ -23,6 +23,10 @@ This document describes the intended client boundary enforced by the migration t
 
 Cross-table policies must not force exposure of `provider_profiles.owner_user_id` or other internal fields. The `private` schema supplies narrowly scoped boolean functions such as provider ownership/discoverability checks. Browser roles receive execute only where required; the underlying private tables remain inaccessible.
 
+## Data export boundary
+
+`/account/export` uses the authenticated user's ordinary Supabase session and the same RLS/Data API grants documented above. It does not switch to `service_role`. The export can therefore assemble owned/participating marketplace records without creating a separate privileged read path.
+
 ## Critical invariants
 
 1. `verified_booking` is never client writable.
@@ -34,5 +38,6 @@ Cross-table policies must not force exposure of `provider_profiles.owner_user_id
 7. Country launch gates are enforced at database/RLS level, not only in the UI.
 8. Account deletion requests cannot bypass active marketplace obligations.
 9. Authenticated marketplace inserts are subject to database-backed rate limits.
-10. RLS and SQL grants must both be reviewed after every migration.
-11. Production migration must be followed by Supabase security/performance advisor review and negative-policy tests.
+10. Self-service data export cannot bypass the user's ordinary RLS boundary.
+11. RLS and SQL grants must both be reviewed after every migration.
+12. Production migration must be followed by Supabase security/performance advisor review and negative-policy tests.

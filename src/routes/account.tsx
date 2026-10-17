@@ -115,6 +115,13 @@ function AccountControls() {
         </section>
 
         <section className="content-card">
+          <span className="eyebrow">Data portability</span>
+          <h2>Download your TrustBooker data</h2>
+          <p className="muted">Export the account, profile and marketplace records available to your signed-in account as a machine-readable JSON file. Authentication tokens, internal platform secrets and unrelated users' private records are never included.</p>
+          <a className="button" href="/account/export" download>Download my data</a>
+        </section>
+
+        <section className="content-card">
           <span className="eyebrow">Data rights</span>
           <h2>Account deletion</h2>
           <p className="muted">TrustBooker records your deletion request immediately. Active bookings must be resolved first, and Trust Operations must preserve transaction, dispute or financial evidence where deletion cannot be immediate.</p>

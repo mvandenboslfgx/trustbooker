@@ -42,6 +42,8 @@ These are account-level database guardrails, not a substitute for production edg
 
 ## Privacy and deletion
 
+- A signed-in user can download a machine-readable JSON export assembled through the user's own RLS-scoped session; service-role credentials are not used for the export.
+- The export excludes authentication tokens, internal secrets and server-only financial/audit payloads while including account and marketplace records the user is entitled to access.
 - A signed-in user can request or cancel account deletion.
 - Deletion requests are blocked while the user participates in an active booking.
 - The request is audited and cannot directly erase transaction or financial evidence.

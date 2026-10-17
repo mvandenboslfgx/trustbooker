@@ -31,6 +31,7 @@ Implemented in this repository:
 - server-side rating and Trust Score recalculation
 - append-only financial event protection
 - audit events for privileged and transaction-sensitive actions
+- self-service machine-readable account/marketplace data export
 - self-service account deletion request/cancellation with active-booking safety checks
 - database-backed authenticated write limits for requests, proposals, messages, reviews and reports
 - liveness (`/health`) and dependency readiness (`/ready`) probes
