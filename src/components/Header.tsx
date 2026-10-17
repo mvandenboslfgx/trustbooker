@@ -30,10 +30,11 @@ export function Header() {
 
   const links = (
     <>
-      <Link to="/marketplace" activeProps={{ className: "active" }}>Explore services</Link>
+      <Link to="/explore" activeProps={{ className: "active" }}>Explore</Link>
+      <Link to="/marketplace" activeProps={{ className: "active" }}>Services</Link>
+      <Link to="/jobs" activeProps={{ className: "active" }}>Jobs</Link>
+      <Link to="/events" activeProps={{ className: "active" }}>Events</Link>
       <Link to="/professionals" activeProps={{ className: "active" }}>For professionals</Link>
-      <Link to="/trust-safety" activeProps={{ className: "active" }}>How trust works</Link>
-      <Link to="/pricing" activeProps={{ className: "active" }}>Pricing</Link>
     </>
   );
 
