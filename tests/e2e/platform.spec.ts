@@ -25,6 +25,18 @@ test("homepage returns TrustBooker HTML", async ({ request }) => {
   expect(await response.text()).toContain("TrustBooker");
 });
 
+test("global responses include baseline security headers", async ({ request }) => {
+  const response = await request.get("/");
+  const headers = response.headers();
+
+  expect(headers["x-request-id"]).toBeTruthy();
+  expect(headers["x-content-type-options"]).toBe("nosniff");
+  expect(headers["x-frame-options"]).toBe("DENY");
+  expect(headers["referrer-policy"]).toBe("strict-origin-when-cross-origin");
+  expect(headers["permissions-policy"]).toContain("camera=()");
+  expect(headers["cross-origin-opener-policy"]).toBe("same-origin-allow-popups");
+});
+
 test("liveness probe is healthy and never cached", async ({ request }) => {
   const response = await request.get("/health");
   expect(response.status()).toBe(200);
