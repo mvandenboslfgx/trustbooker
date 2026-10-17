@@ -192,12 +192,15 @@ begin
  then raise exception 'Registration is not available' using errcode='42501'; end if;
  if v_event.organizer_user_id=auth.uid() then raise exception 'Organizers cannot register for their own event' using errcode='22023'; end if;
  select id into v_id from public.event_registrations where event_id=p_event_id and attendee_user_id=auth.uid();
+ select count(*) into v_count from public.event_registrations where event_id=p_event_id and status='registered';
+ if v_id is not null and exists (select 1 from public.event_registrations where id=v_id and status='registered') then
+   return v_id;
+ end if;
+ if v_count>=v_event.capacity then raise exception 'Event is full' using errcode='23514'; end if;
  if v_id is not null then
    update public.event_registrations set status='registered' where id=v_id;
    return v_id;
  end if;
- select count(*) into v_count from public.event_registrations where event_id=p_event_id and status='registered';
- if v_count>=v_event.capacity then raise exception 'Event is full' using errcode='23514'; end if;
  insert into public.event_registrations(event_id,attendee_user_id) values(p_event_id,auth.uid()) returning id into v_id;
  return v_id;
 end; $$;
