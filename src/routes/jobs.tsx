@@ -39,7 +39,8 @@ function Jobs() {
   }
   async function apply(e:FormEvent<HTMLFormElement>,jobId:string){
     e.preventDefault();const f=new FormData(e.currentTarget);setBusy(true);
-    try {const r=await applyJobFn({data:{jobId,coverNote:String(f.get("coverNote")||"")}});
+    if(f.get("shareEmail")!=="yes"){setNotice("Please consent to sharing your account email with the hiring employer.");setBusy(false);return;}
+    try {const r=await applyJobFn({data:{jobId,coverNote:String(f.get("coverNote")||""),shareAccountEmail:true}});
       setNotice(r.ok?"Application sent securely.":r.message);if(r.ok)setSelected(null);
     }catch{setNotice("We could not send your application.");}finally{setBusy(false);}
   }
@@ -51,7 +52,7 @@ function Jobs() {
         {!publicJobs.ready&&<p className="notice">Vacancies are temporarily unavailable.</p>}
         {!publicJobs.items.length?<div className="tb-vertical-empty"><div className="tb-empty-symbol">↗</div><h3>We're preparing the job board.</h3><p>Real opportunities will appear when verified listings and their countries open for discovery.</p></div>:
           <div className="tb-vertical-cards">{publicJobs.items.map(job=><article key={job.id} className="tb-listing"><span className="tb-section-kicker">{job.company_name}</span><h3>{job.title}</h3><p>{job.description}</p><div className="tb-listing-tags"><span>{job.city}, {job.country_code}</span><span>{job.work_mode.replaceAll("_"," ")}</span><span>{job.employment_type.replaceAll("_"," ")}</span></div>
-            {selected===job.id?<form className="tb-inline-form" onSubmit={e=>void apply(e,job.id)}><label>Cover message<textarea name="coverNote" minLength={20} maxLength={5000} required rows={4}/></label><button className="button button-brand" disabled={busy}>Send application</button><button type="button" className="button" onClick={()=>setSelected(null)}>Cancel</button></form>:<button type="button" className="button button-dark" onClick={()=>setSelected(job.id)}>{user?"Apply now":"Sign in to apply"} ↗</button>}
+            {selected===job.id?<form className="tb-inline-form" onSubmit={e=>void apply(e,job.id)}><label>Cover message<textarea name="coverNote" minLength={20} maxLength={5000} required rows={4}/></label><label className="tb-apply-consent"><input type="checkbox" name="shareEmail" value="yes" required/> I agree to share my verified TrustBooker account email with this employer for this application.</label><button className="button button-brand" disabled={busy}>Send application</button><button type="button" className="button" onClick={()=>setSelected(null)}>Cancel</button></form>:<button type="button" className="button button-dark" onClick={()=>setSelected(job.id)}>{user?"Apply now":"Sign in to apply"} ↗</button>}
           </article>)}</div>}
       </section>
       <aside className="tb-vertical-side"><span className="tb-section-kicker">FOR EMPLOYERS</span><h2>The right person changes everything.</h2><p>Create a free vacancy draft. Staff review is required before public visibility.</p>
