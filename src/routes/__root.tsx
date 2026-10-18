@@ -3,6 +3,8 @@ import { HeadContent, Outlet, Scripts, createRootRoute } from "@tanstack/react-r
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import appCss from "../styles.css?url";
+import verticalCss from "../verticals.css?url";
+import discoveryCss from "../discovery.css?url";
 
 export const Route = createRootRoute({
   head: () => ({
@@ -13,7 +15,7 @@ export const Route = createRootRoute({
       { name: "description", content: "A more considered service marketplace. Find professionals, compare real trust signals and prepare your next project with clarity. Opening market by market." },
       { name: "theme-color", content: "#162b24" },
     ],
-    links: [{ rel: "stylesheet", href: appCss }, { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" }],
+    links: [{ rel: "stylesheet", href: appCss }, { rel: "stylesheet", href: verticalCss }, { rel: "stylesheet", href: discoveryCss }, { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" }],
   }),
   component: RootComponent,
   notFoundComponent: () => <main className="shell page-space"><div className="empty-state"><span className="eyebrow">404</span><h1>That page isn’t here.</h1><p>Try the marketplace or return to the homepage.</p></div></main>,

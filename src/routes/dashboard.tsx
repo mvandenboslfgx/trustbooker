@@ -90,12 +90,12 @@ function Dashboard() {
           <div><span className="tb-section-kicker">AT A GLANCE</span><h2>Your activity</h2></div>
           <div className="dashboard-actions">
             {staff && <Link to="/admin" className="button">Operations ↗</Link>}
-            <Link to="/account" className="button">Account & privacy</Link>
+            <Link to="/my-activity" className="button">My opportunities</Link><Link to="/account" className="button">Account & privacy</Link>
             <button className="button" disabled={busy} onClick={async () => { setBusy(true); await signOutFn(); await navigate({ to: "/login" }); }} type="button">Sign out</button>
           </div>
         </div>
         <div className="stats-grid tb-dash-stats"><Metric label="Open requests" value={summary?.openRequests ?? null} /><Metric label="Active bookings" value={summary?.activeBookings ?? null} /><Metric label="Completed bookings" value={summary?.completedBookings ?? null} /><Metric label="Offers received" value={proposals.length} /></div>
-        <div className="tb-dash-shortcuts"><Link to="/request"><span className="tb-shortcut-icon">↗</span><strong>Start something new</strong><small>Describe the work you need</small></Link><Link to="/professionals"><span className="tb-shortcut-icon">✳</span><strong>Manage my services</strong><small>Update your professional profile</small></Link><Link to="/account"><span className="tb-shortcut-icon">◎</span><strong>Account & security</strong><small>Manage sessions and your data</small></Link></div>
+        <div className="tb-dash-shortcuts"><Link to="/request"><span className="tb-shortcut-icon">↗</span><strong>Start something new</strong><small>Describe the work you need</small></Link><Link to="/professionals"><span className="tb-shortcut-icon">✳</span><strong>Manage my services</strong><small>Update your professional profile</small></Link><Link to="/jobs"><span className="tb-shortcut-icon">↗</span><strong>Careers & jobs</strong><small>Apply or recruit</small></Link><Link to="/events"><span className="tb-shortcut-icon">◎</span><strong>Events</strong><small>Discover or organize</small></Link><Link to="/my-activity"><span className="tb-shortcut-icon">▤</span><strong>My applications</strong><small>Track registrations and applications</small></Link></div>
 
         <section className="content-card">
           <div className="section-head"><div><span className="eyebrow">Transactions</span><h2>Your bookings</h2></div><p className="section-lede">Open the participant workspace for booking status, chat, completion confirmation and dispute controls.</p></div>

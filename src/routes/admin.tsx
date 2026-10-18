@@ -142,7 +142,7 @@ function AdminPage() {
             <a href="#admin-overview"><span>◫</span> Overview</a>
             <a href="#admin-markets"><span>◎</span> Markets & rollout</a>
             <a href="#admin-providers"><span>♧</span> Professionals</a>
-            <a href="#admin-services"><span>▤</span> Services</a>
+            <a href="#admin-services"><span>▤</span> Services</a><Link to="/admin/opportunities"><span>↗</span> Jobs & events review</Link>
             <a href="#admin-verification"><span>✓</span> Verification queue</a>
             <a href="#admin-reviews"><span>★</span> Reviews</a>
             <a href="#admin-disputes"><span>⚑</span> Disputes</a>
