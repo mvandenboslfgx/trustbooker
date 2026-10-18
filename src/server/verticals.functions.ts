@@ -157,15 +157,14 @@ export const getOrganizerAttendanceFn = createServerFn({method:"GET"}).handler(a
  if(!auth)return [];
  const {data:events,error:evError}=await auth.db.from("event_listings")
   .select("id,title,capacity").eq("organizer_user_id",auth.user.id)
-  .order("created_at",{ascending:false}).limit(40);
+  .order("created_at",{ascending:false}).limit(12);
  if(evError||!events?.length)return [];
- const {data:regs,error}=await auth.db.from("event_registrations")
-  .select("event_id,status").in("event_id",events.map(ev=>ev.id)).limit(1000);
- if(error)return [];
- return events.map(ev=>({
-  id:ev.id,title:ev.title,capacity:ev.capacity,
-  registered:(regs??[]).filter(r=>r.event_id===ev.id&&r.status==="registered").length,
+ const counts=await Promise.all(events.map(async ev=>{
+  const {count,error}=await auth.db.from("event_registrations")
+   .select("id",{count:"exact",head:true}).eq("event_id",ev.id).eq("status","registered");
+  return {id:ev.id,title:ev.title,capacity:ev.capacity,registered:error?null:count};
  }));
+ return counts;
 });
 
 export const submitVerticalFn = createServerFn({method:"POST"}).validator(z.object({
