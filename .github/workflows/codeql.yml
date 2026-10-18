@@ -7,9 +7,6 @@ on:
       - 'docs/**'
   pull_request:
     branches: [main]
-    paths-ignore:
-      - '**/*.md'
-      - 'docs/**'
   schedule:
     - cron: '23 4 * * 1'
 concurrency:
