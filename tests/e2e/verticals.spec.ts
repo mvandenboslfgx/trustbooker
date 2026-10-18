@@ -3,9 +3,9 @@ import { test, expect } from "@playwright/test";
 test("unified explore has all marketplace verticals", async ({ page }) => {
   await page.goto("/explore");
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Start here");
-  await expect(page.getByRole("link", { name: /Explore services/ })).toBeVisible();
-  await expect(page.getByRole("link", { name: /Explore jobs/ })).toBeVisible();
-  await expect(page.getByRole("link", { name: /Explore events/ })).toBeVisible();
+  await expect(page.locator("main").getByRole("link", { name: /Explore services/ })).toBeVisible();
+  await expect(page.locator("main").getByRole("link", { name: /Explore jobs/ })).toBeVisible();
+  await expect(page.locator("main").getByRole("link", { name: /Explore events/ })).toBeVisible();
 });
 
 test("jobs directory only shows live records and allows employer sign-in", async ({ page }) => {
