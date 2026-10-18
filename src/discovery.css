@@ -19,3 +19,14 @@
 .tb-discovery-empty { min-height:155px; padding:32px 0; border-top:1px solid #e8eee6; color:#728675; line-height:1.7; }
 @media(max-width:900px) { .tb-discovery-groups { grid-template-columns:1fr; } .tb-discovery-groups > section { padding:23px; } }
 @media(max-width:630px) { .tb-discovery-search { grid-template-columns:1fr; } .tb-discovery-search .button { min-height:50px; } }
+
+/* Private recruiter inbox and consent */
+.tb-apply-consent { display:flex !important; flex-direction:row; align-items:flex-start; gap:11px; margin:7px 0 12px; font-size:12px !important; line-height:1.65; color:#5c7462; }
+.tb-apply-consent input { width:18px; height:18px; margin-top:2px; flex:0 0 18px; accent-color:#527d59; }
+.tb-private-application { padding:19px 0; border-bottom:1px solid #e2eadf; }
+.tb-private-application strong { color:#20382a; font-size:15px; }
+.tb-private-application p { max-width:620px; color:#516b5a; line-height:1.7; white-space:pre-wrap; font-size:13px; }
+.tb-private-application > small { color:#93a395; font-size:11px; }
+.tb-private-application > div { display:flex; align-items:center; flex-wrap:wrap; gap:13px; margin-top:17px; }
+.tb-private-application .button { min-height:40px; }
+.tb-privacy-label { font-size:11px; color:#829283; }
