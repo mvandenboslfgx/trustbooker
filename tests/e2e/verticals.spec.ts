@@ -30,3 +30,11 @@ test("staff moderation page does not expose pending private listings", async ({ 
   await page.goto("/admin/opportunities");
   await expect(page.getByRole("heading", { name: /Staff access required/ })).toBeVisible();
 });
+
+test("one search page unifies all three verticals", async ({ page }) => {
+  await page.goto("/search?q=renovation");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Every opportunity");
+  await expect(page.getByRole("heading", { name: "Professionals" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Vacancies" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Events" })).toBeVisible();
+});
