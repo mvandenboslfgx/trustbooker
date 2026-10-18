@@ -24,7 +24,7 @@ function Marketplace() {
         <div className="tb-market-intro">
           <span className="tb-section-kicker">THE MARKETPLACE / DISCOVER</span>
           <div className="tb-market-heading"><h1 className="page-title">Find your next<br/><em>great professional.</em></h1><p className="page-intro">Search by service and location. Compare real profiles and make your next decision with more confidence.</p></div>
-          <SearchBar />
+          <SearchBar scope="services" />
         </div>
         {!result.configured && <div className="notice" role="status">The marketplace directory is temporarily unavailable. No example listings are shown as real businesses.</div>}
         <div className="tb-filter-section">
