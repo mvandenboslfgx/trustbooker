@@ -70,13 +70,14 @@ export const createJobFn = createServerFn({ method: "POST" }).validator(jobInput
 });
 
 export const applyJobFn = createServerFn({ method: "POST" }).validator(z.object({
-  jobId: uuid, coverNote: z.string().trim().min(20).max(5000),
+  jobId: uuid, coverNote: z.string().trim().min(20).max(5000), shareAccountEmail: z.literal(true),
 })).handler(async ({ data }) => {
   asNoStore();
   const auth = await getAuthenticatedClient();
   if (!auth) return errorResult("Sign in to apply for a vacancy.");
+  if (!auth.user.email) return errorResult("A verified account email is required to apply.");
   const { error } = await auth.db.from("job_applications").insert({
-    job_id:data.jobId, cover_note:data.coverNote,
+    job_id:data.jobId, cover_note:data.coverNote, contact_email:auth.user.email,
   });
   if (error) return errorResult("The application could not be submitted. You may already have applied or the vacancy is unavailable.");
   return { ok:true as const };
@@ -134,6 +135,37 @@ export const getMyOpportunitiesFn = createServerFn({method:"GET"}).handler(async
     auth.db.from("event_registrations").select("id,event_id,status,created_at").eq("attendee_user_id",auth.user.id).order("created_at",{ascending:false}).limit(30),
   ]);
   return {authenticated:true as const,applications:apps.error ? [] : apps.data ?? [],registrations:registrations.error ? [] : registrations.data ?? []};
+});
+
+
+export const getEmployerApplicationsFn = createServerFn({method:"GET"}).handler(async()=>{
+ asNoStore();const auth=await getAuthenticatedClient();
+ if(!auth)return [];
+ const {data:jobs,error:jobsError}=await auth.db.from("job_listings")
+  .select("id,title").eq("owner_user_id",auth.user.id).order("created_at",{ascending:false}).limit(40);
+ if(jobsError||!jobs?.length)return [];
+ const names=new Map(jobs.map(job=>[job.id,job.title]));
+ const {data,error}=await auth.db.from("job_applications")
+  .select("id,job_id,cover_note,contact_email,status,created_at")
+  .in("job_id",jobs.map(job=>job.id)).order("created_at",{ascending:false}).limit(100);
+ if(error||!data)return [];
+ return data.map(row=>({...row,job_title:names.get(row.job_id)??"Your vacancy"}));
+});
+
+export const getOrganizerAttendanceFn = createServerFn({method:"GET"}).handler(async()=>{
+ asNoStore();const auth=await getAuthenticatedClient();
+ if(!auth)return [];
+ const {data:events,error:evError}=await auth.db.from("event_listings")
+  .select("id,title,capacity").eq("organizer_user_id",auth.user.id)
+  .order("created_at",{ascending:false}).limit(40);
+ if(evError||!events?.length)return [];
+ const {data:regs,error}=await auth.db.from("event_registrations")
+  .select("event_id,status").in("event_id",events.map(ev=>ev.id)).limit(1000);
+ if(error)return [];
+ return events.map(ev=>({
+  id:ev.id,title:ev.title,capacity:ev.capacity,
+  registered:(regs??[]).filter(r=>r.event_id===ev.id&&r.status==="registered").length,
+ }));
 });
 
 export const submitVerticalFn = createServerFn({method:"POST"}).validator(z.object({
